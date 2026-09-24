@@ -34,10 +34,12 @@ the value for short-form). Default: whole video.
 ```bash
 revideo analyze "<url-or-file>" -o runs/<name>          # add --whisper small if no subtitles
 ```
-Produces `analysis.json`, `report.md` (measured), `dossier.md` (template), `contact_sheet.jpg`,
-`keyframes/shot_XXX_{in,mid,out}.jpg`, `audio.wav`.
-If cut detection looks wrong (too few shots for the length, or dozens of 1-frame shots), re-run with
-`--engine builtin --threshold 0.25` (more cuts) or `0.5` (fewer).
+Produces `analysis.json` (schema: `docs/SCHEMA.md`), `report.html` + `report.md` (measured),
+`dossier.md` (template), `contact_sheet.jpg`, `keyframes/shot_XXX_{in,mid,out}.jpg`, `audio.wav`.
+Check `tool.detector` first: `flash_rejected_cuts` and `container_reported_frames` tell you when the
+source was tricky. If cuts look wrong compared with the contact sheet, re-run with `--threshold 0.2`
+(more cuts) or `0.45` (fewer), or try `--engine scenedetect` — and say which setting you used.
+Dissolves and slow cross-fades can be missed: check with the contact sheet and note them as [O].
 
 ### Phase 2 — Observe (vision)
 Open `contact_sheet.jpg` first (whole edit at a glance), then every `*_mid.jpg`, and `in/out` frames
@@ -54,8 +56,11 @@ Follow `references/cinematic_reference_protocol.md`:
    revideo index-ref film.mkv -o refs/film.npz --title "…" --director "…" --year 1999
    revideo match-ref runs/<name> refs/film.npz
    ```
-   A hit gives the exact **frame number and timecode**, the crop (9:16/4:5/1:1/full) and whether it
-   was mirrored → tag **[V]**.
+   A hit gives the exact **film frame and timecode**, *which* frame of the reel matched
+   (`query_keyframe`, `query_timecode`), the estimated film timecode where the shot starts
+   (`film_shot_start_estimate`, assumes 1× speed), the crop (`9:16@center`, `4:5@left`…) and whether
+   it was mirrored → tag **[V]**. A shot with `match: false` has **no** timecode: do not invent one.
+   Timecodes belong to the indexed file (edition, fps) — say which file.
 3. Without the file, point to where the user can verify (reverse image search on the keyframe,
    still libraries, credits databases) and keep **[I]**.
 4. Also identify *stylistic* references (director/DP signatures, movements: e.g. symmetrical

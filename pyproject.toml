@@ -1,6 +1,6 @@
 [project]
 name = "revideo"
-version = "0.1.0"
+version = "0.2.0"
 description = "Reverse engineering for video content: measure cuts, color, framing, motion and sound; match exact film frames; score replicas."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -32,3 +32,14 @@ packages = ["src/revideo"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 130
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+ignore = ["E731", "SIM108"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/revideo/report.py" = ["E501"]  # HTML/CSS/Markdown templates

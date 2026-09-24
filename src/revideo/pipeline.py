@@ -10,8 +10,11 @@ from collections import Counter
 import cv2
 import numpy as np
 
-from . import __version__, audio, color, composition, ingest, motion, shots as shotmod
+from . import __version__, audio, color, composition, evidence, ingest, motion
+from . import shots as shotmod
 from .video import probe, timecode
+
+SCHEMA_VERSION = 1  # bump when analysis.json changes shape
 
 
 def _log(msg: str, quiet: bool):
@@ -19,8 +22,17 @@ def _log(msg: str, quiet: bool):
         print(f"▸ {msg}", flush=True)
 
 
-def analyze(source: str, out_dir: str, *, threshold: float = 0.35, engine: str = "auto", no_audio: bool = False,
-            no_motion: bool = False, whisper: str | None = None, quiet: bool = False) -> dict:
+def analyze(
+    source: str,
+    out_dir: str,
+    *,
+    threshold: float = 0.3,
+    engine: str = "builtin",
+    no_audio: bool = False,
+    no_motion: bool = False,
+    whisper: str | None = None,
+    quiet: bool = False,
+) -> dict:
     t0 = time.time()
     os.makedirs(out_dir, exist_ok=True)
 
@@ -31,6 +43,7 @@ def analyze(source: str, out_dir: str, *, threshold: float = 0.35, engine: str =
 
     _log("L1 shot boundaries", quiet)
     shot_list, det = shotmod.detect_shots(video, info, threshold=threshold, engine=engine)
+    info.frame_count = det["decoded_frames"]
     kf_dir = os.path.join(out_dir, "keyframes")
     keyframes = shotmod.export_keyframes(video, info, shot_list, kf_dir)
     sheet = shotmod.contact_sheet(keyframes, shot_list, info.fps, os.path.join(out_dir, "contact_sheet.jpg"))
@@ -44,6 +57,7 @@ def analyze(source: str, out_dir: str, *, threshold: float = 0.35, engine: str =
         mid = cv2.imread(keyframes[s.index].get("mid", "")) if keyframes[s.index].get("mid") else (imgs[0] if imgs else None)
         rec = s.to_dict(info.fps)
         rec["keyframes"] = {k: os.path.relpath(v, out_dir) for k, v in keyframes[s.index].items()}
+        rec["keyframe_frames"] = shotmod.keyframe_frames(s)
         if imgs:
             active = [composition.crop_active(i) for i in imgs]
             rec["palette"] = color.palette(active, k=5)
@@ -52,9 +66,21 @@ def analyze(source: str, out_dir: str, *, threshold: float = 0.35, engine: str =
             rec["active_area"] = composition.active_area(mid)
         if not no_motion:
             rec["camera"] = motion.analyze_shot(video, s.start_frame, s.end_frame, info.fps)
-        rec["interpretation"] = {k: None for k in (
-            "shot_size", "angle", "lens_mm_estimate", "lighting", "subject_action", "on_screen_text",
-            "function_in_story", "cinematic_reference", "prompt_image", "prompt_video")}
+        rec["interpretation"] = {
+            k: None
+            for k in (
+                "shot_size",
+                "angle",
+                "lens_mm_estimate",
+                "lighting",
+                "subject_action",
+                "on_screen_text",
+                "function_in_story",
+                "cinematic_reference",
+                "prompt_image",
+                "prompt_video",
+            )
+        }
         per_shot.append(rec)
 
     transcript, audio_rep = [], None
@@ -76,24 +102,30 @@ def analyze(source: str, out_dir: str, *, threshold: float = 0.35, engine: str =
     fp = fingerprint(info, shot_list, per_shot, all_frames, audio_rep)
 
     result = {
+        "schema_version": SCHEMA_VERSION,
         "tool": {"name": "revideo", "version": __version__, "detector": det, "elapsed_sec": None},
-        "source": {"input": source, "platform": acq["meta"], "video": info.to_dict()},
+        "source": {
+            "input": source,
+            "platform": acq["meta"],
+            "video": {**info.to_dict(), "path": os.path.relpath(video, out_dir)},
+        },
         "fingerprint": fp,
         "shots": per_shot,
         "transcript": transcript,
         "audio": audio_rep,
         "artifacts": {"keyframes_dir": "keyframes", "contact_sheet": os.path.basename(sheet) if sheet else None},
         "evidence_legend": {
-            "measured": "fingerprint, shots[*].palette/grade/framing/active_area/camera, audio",
-            "observed/inferred/verified": "filled by the agent in dossier.md and shots[*].interpretation",
+            evidence.MEASURED: "fingerprint, shots[*].palette/grade/framing/active_area/camera, audio",
+            evidence.VERIFIED: "shots[*].reference_match (from match-ref)",
+            f"{evidence.OBSERVED}/{evidence.INFERRED}": "written by the agent in dossier.md and shots[*].interpretation",
         },
     }
     result["tool"]["elapsed_sec"] = round(time.time() - t0, 1)
     with open(os.path.join(out_dir, "analysis.json"), "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
-    from .report import write_dossier_template, write_measured_report
+    from .report import write_dossier_template, write_reports
 
-    write_measured_report(result, os.path.join(out_dir, "report.md"))
+    write_reports(result, out_dir)
     write_dossier_template(result, os.path.join(out_dir, "dossier.md"))
     _log(f"done in {result['tool']['elapsed_sec']}s → {out_dir}", quiet)
     return result
@@ -103,8 +135,8 @@ def fingerprint(info, shot_list, per_shot, all_frames, audio_rep) -> dict:
     durs = np.array([s.duration for s in shot_list]) if shot_list else np.array([info.duration])
     dur = info.duration or float(durs.sum())
     cuts = max(0, len(shot_list) - 1)
-    # cuts per 5-second window → pacing curve
-    win = 5.0
+    # cuts per window → pacing curve; window scales with length so short reels still get a curve
+    win = 1.0 if dur <= 20 else 5.0 if dur <= 180 else 10.0
     bins = int(np.ceil(dur / win)) or 1
     curve = [0] * bins
     for s in shot_list[1:]:
@@ -126,7 +158,8 @@ def fingerprint(info, shot_list, per_shot, all_frames, audio_rep) -> dict:
         "median_shot_sec": round(float(np.median(durs)), 3),
         "shot_len_std_sec": round(float(durs.std()), 3),
         "shortest_longest_sec": [round(float(durs.min()), 3), round(float(durs.max()), 3)],
-        "pacing_curve_cuts_per_5s": curve,
+        "pacing_window_sec": win,
+        "pacing_curve": curve,
         "hook": {
             "first_shot_sec": round(float(durs[0]), 3),
             "cuts_in_first_3s": first3,

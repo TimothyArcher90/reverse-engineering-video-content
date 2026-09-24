@@ -78,14 +78,21 @@ def iter_frames(path: str, step: int = 1, max_side: int | None = None, start: in
 
 
 def read_frames(path: str, indices: list[int], max_side: int | None = None) -> dict[int, np.ndarray]:
-    """Read specific frames. Sequential decoding is used for accuracy."""
-    wanted = sorted(set(int(i) for i in indices))
+    """Read specific frames frame-accurately: every frame is grabbed, only wanted ones are decoded."""
+    wanted = sorted(set(int(i) for i in indices if i >= 0))
     out: dict[int, np.ndarray] = {}
     if not wanted:
         return out
-    for idx, frame in iter_frames(path, 1, max_side, start=0, end=wanted[-1] + 1):
-        if idx in wanted:
-            out[idx] = frame
+    targets = set(wanted)
+    cap = cv2.VideoCapture(path)
+    idx = 0
+    while idx <= wanted[-1] and cap.grab():
+        if idx in targets:
+            ok, frame = cap.retrieve()
+            if ok:
+                out[idx] = resize_max(frame, max_side) if max_side else frame
+        idx += 1
+    cap.release()
     return out
 
 

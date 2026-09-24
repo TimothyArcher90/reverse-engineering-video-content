@@ -9,9 +9,19 @@ _FACE = None
 
 # Common delivery / camera aspect ratios, used to name the measured active area.
 KNOWN_AR = [
-    (1.0, "1:1"), (0.8, "4:5"), (0.5625, "9:16"), (1.333, "4:3 (Academy-ish)"), (1.375, "1.375 Academy"),
-    (1.5, "3:2"), (1.66, "1.66 European widescreen"), (1.778, "16:9"), (1.85, "1.85 flat"),
-    (2.0, "2.00 Univisium"), (2.2, "2.20 70mm"), (2.39, "2.39 anamorphic/scope"), (2.76, "2.76 Ultra Panavision"),
+    (1.0, "1:1"),
+    (0.8, "4:5"),
+    (0.5625, "9:16"),
+    (1.333, "4:3 (Academy-ish)"),
+    (1.375, "1.375 Academy"),
+    (1.5, "3:2"),
+    (1.66, "1.66 European widescreen"),
+    (1.778, "16:9"),
+    (1.85, "1.85 flat"),
+    (2.0, "2.00 Univisium"),
+    (2.2, "2.20 70mm"),
+    (2.39, "2.39 anamorphic/scope"),
+    (2.76, "2.76 Ultra Panavision"),
 ]
 
 
@@ -36,8 +46,11 @@ def active_area(frame: np.ndarray, thresh: int = 18) -> dict:
         return {"box": [0, 0, w, h], "aspect_ratio": round(w / h, 3), "letterboxed": False}
     y0, y1, x0, x1 = int(rows[0]), int(rows[-1]) + 1, int(cols[0]), int(cols[-1]) + 1
     ar = (x1 - x0) / max(1, (y1 - y0))
-    return {"box": [x0, y0, x1, y1], "aspect_ratio": round(ar, 3),
-            "letterboxed": (y0 > h * 0.03 or (h - y1) > h * 0.03 or x0 > w * 0.03 or (w - x1) > w * 0.03)}
+    return {
+        "box": [x0, y0, x1, y1],
+        "aspect_ratio": round(ar, 3),
+        "letterboxed": (y0 > h * 0.03 or (h - y1) > h * 0.03 or x0 > w * 0.03 or (w - x1) > w * 0.03),
+    }
 
 
 def nearest_ar_name(ar: float) -> str:
@@ -104,8 +117,15 @@ def analyze_frame(frame: np.ndarray) -> dict:
         "visual_center_norm": [round(cx, 3), round(cy, 3)],
         "dist_to_thirds_point": round(float(d_thirds), 3),
         "dist_to_center": round(d_center, 3),
-        "framing_guess": ("no_structure" if mag.mean() < 1.0 else "centered" if d_center < 0.06
-                          else "rule_of_thirds" if d_thirds < 0.08 else "off-center"),
+        "framing_guess": (
+            "no_structure"
+            if mag.mean() < 1.0
+            else "centered"
+            if d_center < 0.06
+            else "rule_of_thirds"
+            if d_thirds < 0.08
+            else "off-center"
+        ),
         "symmetry": round(symmetry, 3),
         "edge_density": round(edge_density, 3),
         "negative_space": round(negative_space, 3),

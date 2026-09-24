@@ -47,7 +47,7 @@ def analyze_shot(path: str, start: int, end: int, fps: float, samples: int = 10,
         return {"type": "undetermined", "evidence_note": "not enough texture to track"}
     arr = np.array(rows)
     tx, ty = arr[:, 0] / w * 100 / dt, arr[:, 1] / w * 100 / dt  # % of width per second
-    zoom = (arr[:, 2] - 1.0) * 100 / dt                            # % scale change per second
+    zoom = (arr[:, 2] - 1.0) * 100 / dt  # % scale change per second
     rot = arr[:, 3] / dt
     mtx, mty, mz, mr = (float(np.median(v)) for v in (tx, ty, zoom, rot))
     jitter = float(np.std(np.diff(tx)) + np.std(np.diff(ty))) if len(tx) > 2 else 0.0

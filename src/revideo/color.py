@@ -15,7 +15,7 @@ def _lab(frame: np.ndarray) -> np.ndarray:
 def lab_to_hex(lab: np.ndarray) -> str:
     px = np.array(lab, dtype=np.float32).reshape(1, 1, 3)
     bgr = np.clip(cv2.cvtColor(px, cv2.COLOR_LAB2BGR)[0, 0] * 255, 0, 255).astype(int)
-    return "#{:02X}{:02X}{:02X}".format(bgr[2], bgr[1], bgr[0])
+    return f"#{bgr[2]:02X}{bgr[1]:02X}{bgr[0]:02X}"
 
 
 def palette(frames: list[np.ndarray], k: int = 6) -> list[dict]:
@@ -46,8 +46,17 @@ def _hue_name(a: float, b: float) -> str:
     if abs(a) < 2 and abs(b) < 2:
         return "neutral"
     ang = (np.degrees(np.arctan2(b, a)) + 360) % 360
-    names = [(20, "magenta-red"), (70, "orange"), (105, "yellow"), (160, "yellow-green"),
-             (200, "green"), (250, "teal-cyan"), (300, "blue"), (340, "violet"), (360, "magenta-red")]
+    names = [
+        (20, "magenta-red"),
+        (70, "orange"),
+        (105, "yellow"),
+        (160, "yellow-green"),
+        (200, "green"),
+        (250, "teal-cyan"),
+        (300, "blue"),
+        (340, "violet"),
+        (360, "magenta-red"),
+    ]
     return next(n for lim, n in names if ang < lim)
 
 
@@ -57,13 +66,15 @@ def grade_stats(frames: list[np.ndarray]) -> dict:
     for f in frames:
         small = cv2.resize(f, (192, int(192 * f.shape[0] / f.shape[1]) or 1), interpolation=cv2.INTER_AREA)
         lab = _lab(small)
-        L.append(lab[..., 0].ravel()); A.append(lab[..., 1].ravel()); B.append(lab[..., 2].ravel())
+        L.append(lab[..., 0].ravel())
+        A.append(lab[..., 1].ravel())
+        B.append(lab[..., 2].ravel())
         S.append(cv2.cvtColor(small, cv2.COLOR_BGR2HSV)[..., 1].ravel() / 255.0)
     L, A, B, S = (np.concatenate(x) for x in (L, A, B, S))
 
     p5, p50, p95 = np.percentile(L, [5, 50, 95])
-    shadows = L <= np.percentile(L, 20)
-    highs = L >= np.percentile(L, 80)
+    shadows = np.percentile(L, 20) >= L
+    highs = np.percentile(L, 80) <= L
     sh_ab = (float(A[shadows].mean()), float(B[shadows].mean()))
     hi_ab = (float(A[highs].mean()), float(B[highs].mean()))
     stats = {

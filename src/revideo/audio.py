@@ -16,8 +16,7 @@ def extract_wav(video: str, out_path: str) -> str | None:
     exe = find_ffmpeg()
     if not exe:
         return None
-    r = subprocess.run([exe, "-y", "-v", "error", "-i", video, "-vn", "-ac", "1", "-ar", str(SR), out_path],
-                       capture_output=True)
+    r = subprocess.run([exe, "-y", "-v", "error", "-i", video, "-vn", "-ac", "1", "-ar", str(SR), out_path], capture_output=True)
     return out_path if r.returncode == 0 and os.path.exists(out_path) and os.path.getsize(out_path) > 1000 else None
 
 
@@ -32,29 +31,41 @@ def load_wav(path: str) -> np.ndarray:
     return x / float(np.iinfo(dtype).max)
 
 
-def _stft_mag(x: np.ndarray, n_fft=2048, hop=512) -> np.ndarray:
+def _onset_strength(x: np.ndarray, n_fft=2048, hop=512, chunk=2048) -> np.ndarray:
+    """Half-wave-rectified spectral flux on log magnitude, computed in chunks to bound memory."""
     if len(x) < n_fft:
         x = np.pad(x, (0, n_fft - len(x)))
     frames = np.lib.stride_tricks.sliding_window_view(x, n_fft)[::hop]
-    return np.abs(np.fft.rfft(frames * np.hanning(n_fft), axis=1))
+    win = np.hanning(n_fft).astype(np.float32)
+    flux, prev = [], None
+    for i in range(0, len(frames), chunk):
+        logm = np.log1p(np.abs(np.fft.rfft(frames[i : i + chunk] * win, axis=1)) * 10).astype(np.float32)
+        if prev is not None:
+            logm = np.vstack([prev, logm])
+        flux.append(np.maximum(0, np.diff(logm, axis=0)).sum(axis=1))
+        prev = logm[-1:]
+    return np.concatenate([[0.0], *flux])
+
+
+def _rms(x: np.ndarray, win=2048, hop=512) -> np.ndarray:
+    c = np.concatenate([[0.0], np.cumsum(x.astype(np.float64) ** 2)])
+    starts = np.arange(0, max(1, len(x) - win + 1), hop)
+    ends = np.minimum(starts + win, len(x))
+    return np.sqrt((c[ends] - c[starts]) / np.maximum(1, ends - starts))
 
 
 def analyze(wav_path: str, cut_times: list[float]) -> dict:
     x = load_wav(wav_path)
     hop = 512
-    mag = _stft_mag(x, hop=hop)
     fr = SR / hop
-    rms = np.sqrt((np.lib.stride_tricks.sliding_window_view(np.pad(x, (0, 2048)), 2048)[::hop] ** 2).mean(axis=1))
-    rms_db = 20 * np.log10(rms + 1e-9)
-
-    # onset strength: half-wave rectified spectral flux on log magnitude
-    logm = np.log1p(mag * 10)
-    flux = np.maximum(0, np.diff(logm, axis=0)).sum(axis=1)
-    flux = np.concatenate([[0], flux])
+    rms_db = 20 * np.log10(_rms(x, hop=hop) + 1e-9)
+    flux = _onset_strength(x, hop=hop)
     flux = (flux - flux.mean()) / (flux.std() + 1e-9)
 
-    # tempo via autocorrelation in 60–200 BPM
-    ac = np.correlate(flux, flux, mode="full")[len(flux) - 1:]
+    # tempo via autocorrelation (FFT, O(n log n)) in 60–200 BPM
+    n = len(flux)
+    spec = np.fft.rfft(flux, 2 * n)
+    ac = np.fft.irfft(spec * np.conj(spec))[:n]
     lags = np.arange(len(ac))
     bpm_of = lambda lag: 60 * fr / lag
     valid = (lags > 0) & (bpm_of(np.maximum(lags, 1)) <= 200) & (bpm_of(np.maximum(lags, 1)) >= 60)
