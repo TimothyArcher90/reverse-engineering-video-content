@@ -17,6 +17,11 @@ from .video import probe, timecode
 SCHEMA_VERSION = 1  # bump when analysis.json changes shape
 
 
+def _rel(path: str, start: str) -> str:
+    """Relative path with forward slashes: portable in JSON and valid as an HTML src on every OS."""
+    return os.path.relpath(path, start).replace(os.sep, "/")
+
+
 def _log(msg: str, quiet: bool):
     if not quiet:
         print(f"▸ {msg}", flush=True)
@@ -56,7 +61,7 @@ def analyze(
         all_frames.extend(imgs)
         mid = cv2.imread(keyframes[s.index].get("mid", "")) if keyframes[s.index].get("mid") else (imgs[0] if imgs else None)
         rec = s.to_dict(info.fps)
-        rec["keyframes"] = {k: os.path.relpath(v, out_dir) for k, v in keyframes[s.index].items()}
+        rec["keyframes"] = {k: _rel(v, out_dir) for k, v in keyframes[s.index].items()}
         rec["keyframe_frames"] = shotmod.keyframe_frames(s)
         if imgs:
             active = [composition.crop_active(i) for i in imgs]
@@ -107,7 +112,7 @@ def analyze(
         "source": {
             "input": source,
             "platform": acq["meta"],
-            "video": {**info.to_dict(), "path": os.path.relpath(video, out_dir)},
+            "video": {**info.to_dict(), "path": _rel(video, out_dir)},
         },
         "fingerprint": fp,
         "shots": per_shot,
