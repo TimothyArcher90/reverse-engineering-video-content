@@ -1,0 +1,34 @@
+[project]
+name = "revideo"
+version = "0.1.0"
+description = "Reverse engineering for video content: measure cuts, color, framing, motion and sound; match exact film frames; score replicas."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "numpy>=1.24",
+    "opencv-python>=4.8,<5",  # 5.x dropped the Haar face detector; same package PySceneDetect requires
+]
+
+[project.optional-dependencies]
+full = [
+    "scenedetect>=0.6",
+    "yt-dlp>=2024.1",
+    "imageio-ffmpeg>=0.4",
+]
+whisper = ["faster-whisper>=1.0"]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+revideo = "revideo.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/revideo"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

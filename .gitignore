@@ -1,0 +1,12 @@
+__pycache__/
+*.egg-info/
+.venv/
+.pytest_cache/
+runs/
+refs/
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.wav
+*.npz
