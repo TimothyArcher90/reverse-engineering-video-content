@@ -4,7 +4,7 @@ What has been tested, how, and what the numbers were. Anything not listed here i
 
 ## 1. Automated tests (CI, every push)
 
-17 tests on synthetic videos with known ground truth (`tests/`):
+31 tests on synthetic videos, photos and audio with known ground truth (`tests/`):
 
 | Area | What is asserted |
 |---|---|
@@ -20,8 +20,17 @@ What has been tested, how, and what the numbers were. Anything not listed here i
 | Film-frame match | Center 9:16 crop → exact frame ±1; **left-aligned 4:5 crop + mirrored + re-graded** → exact frame ±1; unrelated shot → no match and **no timecode emitted** |
 | Fidelity | Identity = 100; different videos < 80 |
 | CLI | `analyze`, `compare`, `report` end to end; HTML report references keyframes and contains the chart |
+| Photo forensics | JPEG with EXIF + Lightroom XMP → camera model and every Camera Raw slider recovered 1:1; plan copies them verbatim |
+| AI forensics | PNG with Automatic1111 parameters → prompt, seed and sampler recovered; tool = Stable Diffusion |
+| Creator claims | Tools named in the post text are reported as `creator_mention`, never as file evidence |
+| Optics | Sharp centre on a blurred field → shallow DOF, focus at centre, vignette detected; flat image → `undetermined` |
+| Key / tempo | A-minor triad at 120 BPM → A minor (or relative C major), 120 ± 1.5 BPM (reads 120.0) |
+| Plans | Every measured shot appears with its duration; measured pan reaches the shot list; all tiers present |
+| Catalog | No price figures, HTTPS links, unique names, `prices_verified: false` |
+| Photo/audio compare | Identical input ≥ 99; photo vs audio refused |
+| Skill package | Built `.skill` unzipped and run with installs disabled → analysis from the bundled source |
 
-CI runs lint (ruff) and the test suite on Python 3.10 and 3.12.
+CI runs lint (ruff) and the test suite on Linux (3.10, 3.12), macOS and Windows. A daily run repeats the suite on the newest dependencies and checks every catalog link.
 
 ## 2. Real footage (manual, v0.2.0)
 
@@ -42,7 +51,11 @@ recording of fireworks.
 - Feature-length reference films (indexing time and precision with thousands of similar frames).
 - Crops at arbitrary positions/zoom outside the left/center/right windows, speed ramps, heavy text overlays.
 - Face-based shot size on real faces (Haar cascade; OpenCV 4.x only).
-- Tempo on real music (only a synthetic click track is tested); half/double-time errors are possible.
+- Tempo and key on real music (only synthetic signals are tested); half/double-time and relative-key errors are possible.
+- Photos straight from real phones/cameras (EXIF layouts vary by maker; HEIC is not decoded — convert to JPG).
+- Tool fingerprints on real exports from each editor: the rules match documented strings, but each app's
+  export metadata has not been sampled here.
+- Catalog links: this environment's network policy blocked them; the daily workflow checks them on GitHub.
 - URL download through `yt-dlp` (network was not available in the validation environment).
 - The fidelity-score weights: they are a reasoned starting point, not calibrated against human judgement.
 - `--engine scenedetect`: on the fireworks clip it still reports 7 shots after flash filtering (built-in: 1).
