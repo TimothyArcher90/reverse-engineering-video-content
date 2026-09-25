@@ -212,6 +212,11 @@ def plan(r: dict) -> str:
         mids = [s.get("optics") for s in r["shots"] if s.get("optics")]
         if mids:
             L += ["", "## 4. Optics", *[f"- {x}" for x in _optics_steps(mids[len(mids) // 2], None)]]
+        from .social import advice
+
+        soc = advice(r.get("social"))
+        if soc:
+            L += ["", "## 4b. Reels / TikTok delivery", *[f"- {x}" for x in soc]]
         L += ["", "## 5. Paths by condition"]
         L += _paths(catalog, ai=True, shoot=True)
         L += ["", "## 6. AI prompt pack (fill the [subject] from each keyframe)"]

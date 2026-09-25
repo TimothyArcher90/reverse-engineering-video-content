@@ -1,0 +1,17 @@
+{
+  "about": "9:16 safe-zone presets used by `social.py`. Margins are fractions of the frame (top, bottom, left, right). They come from third-party summaries of the platforms' own templates; the official pages could not be fetched when this file was written. Platforms change their UI overlays: check the current official template (TikTok Ads Manager safe-zone templates, Meta Ads Manager safe-zone guardrail) before relying on a number.",
+  "verified": false,
+  "checked": "2026-09-25",
+  "presets": {
+    "meta_reels_stories": {
+      "label": "Instagram/Facebook Reels + Stories (Meta unified 9:16)",
+      "margins": {"top": 0.14, "bottom": 0.35, "left": 0.06, "right": 0.06},
+      "source": "https://blog.adnabu.com/meta-ads/meta-safe-zones/ (third-party summary of Meta's guidance)"
+    },
+    "tiktok_in_feed": {
+      "label": "TikTok in-feed (standard layout)",
+      "margins": {"top": 0.05625, "bottom": 0.16667, "left": 0.05556, "right": 0.11111},
+      "source": "https://admanage.ai/blog/tiktok-ad-specs (third-party: 108/320 px of 1920, 60/120 px of 1080); TikTok publishes several templates, not one universal zone"
+    }
+  }
+}

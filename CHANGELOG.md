@@ -3,6 +3,17 @@
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+### Added
+- **Short-form layer** (`social.py`, `analysis.json → social`) for Reels/TikTok/Shorts:
+  - on-screen text timing and placement (a classical stroke detector, no OCR dependency);
+  - hook metrics for 0–3 s (cuts, motion energy against the rest, first text);
+  - safe-zone checks against Meta and TikTok presets (`data/platforms.json`, third-party sources,
+    marked unverified);
+  - loop detection (first vs last frame);
+  - 9:16 and 1080×1920 checks.
+  These feed a "Reels / TikTok delivery" section in the plan and reports.
+
 ## [0.3.0] — 2026-09-25
 
 The master-copycat release: photos and sound as well as video, everything the file says about how it
