@@ -1,7 +1,5 @@
 """Synthetic fixtures: videos with known cuts, colors, motion and a known film-frame origin."""
 
-import os
-
 import cv2
 import numpy as np
 import pytest
@@ -31,19 +29,25 @@ def edit_video(tmp_path_factory):
     d = tmp_path_factory.mktemp("edit")
     h, w = 180, 320
     frames = []
-    warm = np.full((h, w, 3), (40, 120, 230), np.uint8)   # BGR orange
-    cool = np.full((h, w, 3), (200, 150, 40), np.uint8)   # BGR teal/blue
-    for i in range(24):
-        f = warm.copy(); cv2.circle(f, (160, 90), 30, (255, 255, 255), -1); frames.append(f)
-    for i in range(36):
-        f = cool.copy(); cv2.rectangle(f, (40, 40), (120, 140), (20, 20, 20), -1); frames.append(f)
+    warm = np.full((h, w, 3), (40, 120, 230), np.uint8)  # BGR orange
+    cool = np.full((h, w, 3), (200, 150, 40), np.uint8)  # BGR teal/blue
+    for _ in range(24):
+        f = warm.copy()
+        cv2.circle(f, (160, 90), 30, (255, 255, 255), -1)
+        frames.append(f)
+    for _ in range(36):
+        f = cool.copy()
+        cv2.rectangle(f, (40, 40), (120, 140), (20, 20, 20), -1)
+        frames.append(f)
     big = _texture(h, w * 3, 7)
     for i in range(48):
         x = int(i * 8)  # content moves left → camera pans right
-        frames.append(big[:, x:x + w].copy())
+        frames.append(big[:, x : x + w].copy())
     dark = np.full((h, w, 3), (25, 25, 30), np.uint8)
-    for i in range(24):
-        f = dark.copy(); cv2.line(f, (0, 0), (320, 180), (90, 90, 90), 3); frames.append(f)
+    for _ in range(24):
+        f = dark.copy()
+        cv2.line(f, (0, 0), (320, 180), (90, 90, 90), 3)
+        frames.append(f)
     return write(str(d / "edit.mp4"), frames)
 
 
@@ -58,16 +62,40 @@ def film_and_reel(tmp_path_factory):
         tex = _texture(fh, fw * 2, 100 + s)
         for i in range(48):
             img = np.zeros((canvas_h, fw, 3), np.uint8)
-            img[45:45 + fh] = tex[:, i * 2:i * 2 + fw]
+            img[45 : 45 + fh] = tex[:, i * 2 : i * 2 + fw]
             film.append(img)
     film_path = write(str(d / "film.mp4"), film)
     target = 4 * 48 + 20  # the exact frame the reel quotes
     reel = []
-    for k in range(12):
-        src = film[target][45:45 + fh]
+    for _ in range(12):
+        src = film[target][45 : 45 + fh]
         cw = int(fh * 9 / 16)
         x = (fw - cw) // 2
-        crop = src[:, x:x + cw]
+        crop = src[:, x : x + cw]
         reel.append(cv2.resize(crop, (180, 320)))
     reel_path = write(str(d / "reel.mp4"), reel)
     return film_path, reel_path, target
+
+
+@pytest.fixture(scope="session")
+def hard_reel(film_and_reel, tmp_path_factory):
+    """Harder derivative of the film: left-aligned 4:5 crop, mirrored, warm grade + contrast change,
+    downscaled, then a second unrelated shot appended."""
+    film_path, _, _ = film_and_reel
+    d = tmp_path_factory.mktemp("hard")
+    cap = cv2.VideoCapture(film_path)
+    frames = []
+    while True:
+        ok, f = cap.read()
+        if not ok:
+            break
+        frames.append(f)
+    target = 2 * 48 + 30
+    src = frames[target][45 : 45 + 270]
+    cw = int(270 * 4 / 5)
+    crop = cv2.flip(src[:, :cw], 1).astype(np.float32)
+    crop = np.clip((crop - 128) * 1.25 + 128 + np.array([-12, 4, 22]), 0, 255).astype(np.uint8)
+    shot1 = [cv2.resize(crop, (216, 270))] * 18
+    other = _texture(270, 216, 999)
+    shot2 = [other] * 18
+    return write(str(d / "hard.mp4"), shot1 + shot2), target

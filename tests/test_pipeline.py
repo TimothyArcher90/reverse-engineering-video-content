@@ -19,7 +19,8 @@ def test_shots_color_motion(edit_video, tmp_path):
     assert "low-key" in r["shots"][3]["grade"]["look_labels"]
     for f in ("analysis.json", "report.md", "dossier.md", "contact_sheet.jpg"):
         assert os.path.exists(tmp_path / "run" / f)
-    json.load(open(tmp_path / "run" / "analysis.json"))
+    with open(tmp_path / "run" / "analysis.json") as f:
+        json.load(f)
 
 
 def test_compare_identity_is_100(edit_video, tmp_path):

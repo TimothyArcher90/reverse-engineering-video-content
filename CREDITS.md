@@ -13,3 +13,9 @@ copied; ideas and structure were reimplemented.
 What this project adds: evidence tagging on every claim, exact film-frame matching through
 reel crops and mirroring, a cinematic-reference verification protocol, tool/workflow fingerprints,
 cross-platform lightweight dependencies (no torch), and round-trip fidelity scoring.
+
+## Media used in validation and documentation
+- *Big Buck Bunny* © 2008 Blender Foundation | www.bigbuckbunny.org — CC BY 3.0. The screenshot in
+  `docs/img/report-dark.png` contains a frame of it. No other media is stored in this repository.
+- Validation clips come from OpenCV's test data ([opencv/opencv_extra](https://github.com/opencv/opencv_extra),
+  `testdata/highgui/video`) and are downloaded on demand, not redistributed.

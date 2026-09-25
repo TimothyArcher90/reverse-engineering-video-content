@@ -5,4 +5,4 @@ matches frames against reference films, and hands an evidence-tagged dossier
 to a vision-capable agent that writes the interpretation and replication plan.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"

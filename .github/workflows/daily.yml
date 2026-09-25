@@ -1,0 +1,25 @@
+name: daily
+# Keeps the copycat current: newest dependencies (yt-dlp site extractors change often),
+# tool catalog links, and a fresh .skill build. A red run is the signal to update something.
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  fresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -U -e ".[full,dev]"
+      - run: pip list --format=freeze | grep -iE "^(yt-dlp|opencv-python|numpy|pillow|scenedetect)=="
+      - run: pytest -q
+      - run: python tools/check_catalog.py
+      - run: python tools/build_skill.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reverse-engineering-video.skill
+          path: dist/reverse-engineering-video.skill

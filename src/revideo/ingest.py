@@ -10,9 +10,26 @@ import shutil
 
 # Platform metadata worth keeping: it is part of "what was published and how".
 META_KEYS = (
-    "id", "title", "description", "uploader", "uploader_id", "channel", "upload_date",
-    "timestamp", "duration", "view_count", "like_count", "comment_count", "repost_count",
-    "tags", "categories", "webpage_url", "extractor", "track", "artist", "album",
+    "id",
+    "title",
+    "description",
+    "uploader",
+    "uploader_id",
+    "channel",
+    "upload_date",
+    "timestamp",
+    "duration",
+    "view_count",
+    "like_count",
+    "comment_count",
+    "repost_count",
+    "tags",
+    "categories",
+    "webpage_url",
+    "extractor",
+    "track",
+    "artist",
+    "album",
 )
 
 
@@ -34,6 +51,18 @@ def acquire(source: str, workdir: str, max_height: int = 1080) -> dict:
         subs = [p for p in glob.glob(os.path.splitext(source)[0] + "*.vtt") + glob.glob(os.path.splitext(source)[0] + "*.srt")]
         return {"video": dest, "meta": {"source": "local_file", "filename": os.path.basename(source)}, "subtitles": subs}
 
+    from .forensics import media_kind
+
+    if media_kind(source) != "video":  # direct link to a photo or an audio file: plain download
+        import urllib.request
+
+        name = os.path.basename(source.split("?")[0]) or "download"
+        dest = os.path.join(src_dir, name)
+        req = urllib.request.Request(source, headers={"User-Agent": "Mozilla/5.0 revideo"})
+        with urllib.request.urlopen(req, timeout=60) as r, open(dest, "wb") as f:
+            shutil.copyfileobj(r, f)
+        return {"video": dest, "meta": {"source": "direct_url", "url": source}, "subtitles": []}
+
     try:
         import yt_dlp
     except ImportError as e:  # pragma: no cover
@@ -41,7 +70,9 @@ def acquire(source: str, workdir: str, max_height: int = 1080) -> dict:
 
     opts = {
         "outtmpl": os.path.join(src_dir, "video.%(ext)s"),
-        "format": f"bv*[height<={max_height}][ext=mp4]+ba[ext=m4a]/b[height<={max_height}][ext=mp4]/bv*[height<={max_height}]+ba/b",
+        "format": (
+            f"bv*[height<={max_height}][ext=mp4]+ba[ext=m4a]/b[height<={max_height}][ext=mp4]/bv*[height<={max_height}]+ba/b"
+        ),
         "merge_output_format": "mp4",
         "writesubtitles": True,
         "writeautomaticsub": True,
@@ -52,8 +83,18 @@ def acquire(source: str, workdir: str, max_height: int = 1080) -> dict:
         "no_warnings": True,
         "noplaylist": True,
     }
+    from .video import find_ffmpeg
+
+    if find_ffmpeg():
+        opts["ffmpeg_location"] = find_ffmpeg()
     with yt_dlp.YoutubeDL(opts) as ydl:
-        info = ydl.extract_info(source, download=True)
+        try:
+            info = ydl.extract_info(source, download=True)
+        except yt_dlp.utils.DownloadError as e:
+            raise RuntimeError(
+                f"{e}\nPlatforms change their pages often: update the downloader (`revideo.py setup --update`, "
+                "i.e. pip install -U yt-dlp) or download the file yourself and pass its path."
+            ) from e
         video = ydl.prepare_filename(info)
     if not os.path.exists(video):
         cands = [p for p in glob.glob(os.path.join(src_dir, "video.*")) if not p.endswith((".json", ".vtt"))]
@@ -88,12 +129,12 @@ def parse_subtitles(path: str) -> list[dict]:
         blocks = re.split(r"\n\s*\n", f.read())
     out: list[dict] = []
     for b in blocks:
-        lines = [l for l in b.strip().splitlines() if l.strip()]
-        arrow = next((i for i, l in enumerate(lines) if "-->" in l), None)
+        lines = [ln for ln in b.strip().splitlines() if ln.strip()]
+        arrow = next((i for i, ln in enumerate(lines) if "-->" in ln), None)
         if arrow is None:
             continue
         start_s, end_s = lines[arrow].split("-->")[:2]
-        text = " ".join(re.sub(r"<[^>]+>", "", l).strip() for l in lines[arrow + 1:]).strip()
+        text = " ".join(re.sub(r"<[^>]+>", "", ln).strip() for ln in lines[arrow + 1 :]).strip()
         if not text:
             continue
         if out and (text == out[-1]["text"] or text.startswith(out[-1]["text"])):
