@@ -31,6 +31,29 @@ def sharpness_map(img: np.ndarray, grid: int = 8) -> np.ndarray:
     return cells / (cells.max() + 1e-9)
 
 
+def _falloff(g: np.ndarray) -> tuple[float | None, str | None]:
+    """How far (in % of the short side) detail takes to fade from the sharp region into the blur.
+
+    Optical defocus fades over a distance; a pasted or cut-out sharp region drops to blur almost at once.
+    """
+    e = cv2.GaussianBlur(cv2.Laplacian(g, cv2.CV_32F, ksize=3) ** 2, (0, 0), 3)
+    e = e / (np.percentile(e, 99.5) + 1e-9)
+    sharp = (e > 0.5).astype(np.uint8)
+    if sharp.sum() < 50:
+        return None, None
+    dist = cv2.distanceTransform(1 - sharp, cv2.DIST_L2, 3) / min(g.shape) * 100  # % of short side
+    for d in np.arange(0.5, 40, 0.5):
+        ring = (dist > d - 0.5) & (dist <= d)
+        if ring.sum() > 20 and np.median(e[ring]) < 0.05:
+            width = round(float(d), 1)
+            break
+    else:
+        return None, "no clear sharp/blur boundary"
+    if width <= 3.0:
+        return width, "abrupt — hard boundary: cut-out/composite likely (or a subject very far from its background)"
+    return width, "gradual — consistent with optical depth of field"
+
+
 def analyze(img: np.ndarray) -> dict:
     g = _gray(img).astype(np.float32)
     h, w = g.shape
@@ -41,6 +64,13 @@ def analyze(img: np.ndarray) -> dict:
     focus_center = (
         [round(float((xs.mean() + 0.5) / sm.shape[1]), 3), round(float((ys.mean() + 0.5) / sm.shape[0]), 3)] if len(xs) else None
     )
+    n = sm.shape[0]
+    sharp_box = (
+        [round(xs.min() / n, 3), round(ys.min() / n, 3), round((xs.max() + 1) / n, 3), round((ys.max() + 1) / n, 3)]
+        if len(xs)
+        else None
+    )
+    falloff_width, falloff = _falloff(g) if len(xs) and sharp_share < 0.6 else (None, None)
 
     # vignette: corner luminance vs center luminance
     c = g[h // 3 : 2 * h // 3, w // 3 : 2 * w // 3].mean()
@@ -58,6 +88,9 @@ def analyze(img: np.ndarray) -> dict:
     return {
         "sharp_area_share": round(sharp_share, 3),
         "focus_center_norm": focus_center,
+        "sharp_region_box_norm": sharp_box,
+        "focus_falloff_width_pct": falloff_width,
+        "focus_falloff_guess": falloff,
         "depth_of_field_guess": "undetermined (too little texture)"
         if raw_detail < 4
         else "shallow (subject isolation)"

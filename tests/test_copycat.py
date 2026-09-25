@@ -161,3 +161,37 @@ def test_compare_photo_and_audio_replicas(photo, track, tmp_path):
         assert compare(str(a), str(b))["fidelity_score"] >= 99  # identical input → near-perfect score
     with pytest.raises(SystemExit):
         compare(str(tmp_path / "p1"), str(tmp_path / "a1"))
+
+
+def test_falloff_tells_composite_from_optical_blur(photo):
+    """The fixture pastes a sharp square over a blurred field: that edge is abrupt, unlike real defocus."""
+    comp = optics.analyze(cv2.imread(photo))
+    assert comp["focus_falloff_guess"].startswith("abrupt")
+    rng = np.random.default_rng(0)
+    tex = cv2.GaussianBlur((rng.random((400, 600, 3)) * 255).astype(np.uint8), (0, 0), 0.8)
+    yy, xx = np.mgrid[0:400, 0:600]
+    d = np.clip((np.hypot(xx - 300, yy - 200) - 40) / 200, 0, 1)
+    stack = [tex] + [cv2.GaussianBlur(tex, (0, 0), s) for s in np.linspace(0.5, 10, 20)]
+    idx = (d * (len(stack) - 1)).astype(int)
+    optical = np.zeros_like(tex)
+    for i, b in enumerate(stack):
+        optical[idx == i] = b[idx == i]
+    assert optics.analyze(optical)["focus_falloff_guess"].startswith("gradual")
+
+
+def test_photo_subject_palette_and_still_prompt(photo, tmp_path):
+    out = tmp_path / "s"
+    cli.main(["analyze", photo, "-o", str(out), "--quiet"])
+    r = json.loads((out / "analysis.json").read_text())
+    x0, y0, x1, y1 = r["subject"]["box_px"]
+    assert 180 <= x0 <= 240 and 360 <= x1 <= 420  # the sharp square spans x 230–370 of 600
+    plan = (out / "replication_plan.md").read_text()
+    assert "flicker" not in plan  # a still image has no temporal artifacts
+    assert "cut out/composited" in plan
+    stream = r["forensics"]["container"]["streams"][0]
+    assert "fps" not in stream and "fps" not in stream["desc"]
+
+
+def test_fingerprint_evidence_names_the_field(photo):
+    hit = next(h for h in forensics.gather(photo)["tool_fingerprints"] if h["tool"] == "Adobe Lightroom")
+    assert hit["evidence"].startswith("xmp.CreatorTool: Adobe Lightroom")

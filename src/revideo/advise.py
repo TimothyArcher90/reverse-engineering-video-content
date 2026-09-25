@@ -49,6 +49,22 @@ def _move_key(cam_type: str) -> str:
     return "handheld" if "handheld" in t else "static"
 
 
+def _recipe_checks(crs: dict | None, o: dict | None) -> list[str]:
+    """Where the embedded recipe and the pixels disagree, say so: the recipe may not match this export."""
+    if not crs or not o:
+        return []
+    out = []
+    try:
+        grain = float(crs.get("GrainAmount", 0))
+    except ValueError:
+        grain = 0
+    if grain > 0 and o.get("grain_guess") == "clean":
+        out.append(
+            f"Embedded GrainAmount {grain:g} but the pixels measure clean: downscaling may have removed it, or the settings do not match this export [I]."
+        )
+    return out
+
+
 def _grade_steps(g: dict, crs: dict | None) -> list[str]:
     if crs:
         return ["**Exact settings found in the file's metadata (Lightroom/Camera Raw)** [M] — copy them 1:1:"] + [
@@ -78,6 +94,12 @@ def _optics_steps(o: dict | None, lens: dict | None) -> list[str]:
     if o:
         dof = o["depth_of_field_guess"]
         if dof.startswith("undetermined"):
+            return out
+        if (o.get("focus_falloff_guess") or "").startswith("abrupt"):
+            out.append(
+                f"Focus falloff *abrupt* ({o['focus_falloff_width_pct']} % of the short side) → the sharp region was most likely "
+                "cut out/composited over a blurred background: rebuild it in post (layer + blurred plate). No lens gives this edge."
+            )
             return out
         out.append(
             f"Depth of field *{dof}* → "
@@ -113,7 +135,8 @@ def _prompt(spec: dict) -> dict:
         parts.append(f"{spec['duration']} s")
     return {
         "prompt": ", ".join(p for p in parts if p),
-        "negative": "text artifacts, watermark, extra fingers, warped faces, flicker, color shift between frames",
+        "negative": "text artifacts, watermark, extra fingers, warped faces"
+        + ("" if spec.get("still") else ", flicker, color shift between frames"),
     }
 
 
@@ -202,9 +225,17 @@ def plan(r: dict) -> str:
             "## 1. Target spec [M]",
             f"- {im['width']}×{im['height']} ({im['format_guess']}) · palette {', '.join(c['hex'] for c in r['palette'][:6])}",
             f"- Framing {r['framing']['framing_guess']} · visual center {r['framing']['visual_center_norm']}",
+            *(
+                [
+                    f"- Subject (in-focus region) at {r['subject']['box_px']} px · palette {', '.join(c['hex'] for c in r['subject']['palette'])}"
+                ]
+                if r.get("subject")
+                else []
+            ),
             "",
             "## 2. Grade recipe",
             *[f"- {x}" for x in _grade_steps(g, crs)],
+            *[f"- ⚠ {x}" for x in _recipe_checks(crs, o)],
             "",
             "## 3. Optics & capture",
             *[f"- {x}" for x in _optics_steps(o, r.get("camera_and_lens"))],
@@ -218,9 +249,10 @@ def plan(r: dict) -> str:
             {
                 "shot_size": (r["framing"].get("faces") or {}).get("shot_size_estimate"),
                 "dof": o["depth_of_field_guess"].split(" ")[0],
-                "hexes": [c["hex"] for c in r["palette"]],
+                "hexes": [c["hex"] for c in (r.get("subject") or {}).get("palette", [])[:2]] + [c["hex"] for c in r["palette"]],
                 "look": g["look_labels"][:3],
                 "ar": im["format_guess"].split(" ")[0],
+                "still": True,
             }
         )
         gen = (meta.get("png_text") or {}).get("parameters")

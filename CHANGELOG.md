@@ -16,6 +16,9 @@ was made, and a replication plan per budget and condition.
   flags, and tool fingerprints with the matched string as evidence. Tools named in the post text are
   kept separately as creator claims.
 - **Optics**: depth of field, focus centre, vignette, grain and clipping, for photos and each video shot.
+  `focus_falloff_guess` tells optical defocus (gradual) from a cut-out/composite (abrupt edge). Photos
+  also get a `subject` block: the in-focus region's box and palette.
+- Plans flag embedded recipes that disagree with the pixels (for example grain set but none measured).
 - **Audio**: key estimate (Krumhansl–Kessler), energy per band, spectral centroid, crest factor; BPM
   now uses sub-frame peak interpolation (the 120 BPM test signal reads 120.0, it read 117.5).
 - **`replication_plan.md`** for every run (`plan` command): target spec, EDL with rig per tier,

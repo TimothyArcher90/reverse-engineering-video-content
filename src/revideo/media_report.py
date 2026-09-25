@@ -96,12 +96,15 @@ def write_media_reports(r: dict, out_dir: str) -> None:
             f"- Look: *{', '.join(g['look_labels'])}*",
             "\n## Optics & composition",
             f"- Depth of field: *{o['depth_of_field_guess']}* (sharp area {o['sharp_area_share']}) · focus at {o['focus_center_norm']}",
+            f"- Focus falloff: *{o.get('focus_falloff_guess') or '–'}* (width {o.get('focus_falloff_width_pct')} % of short side)",
             f"- Vignette *{o['vignette_guess']}* ({o['vignette_corner_to_center']}) · grain *{o['grain_guess']}* (σ {o['grain_noise_std']})",
             f"- Clipped highlights {o['clipped_highlights_pct']} % · crushed shadows {o['crushed_shadows_pct']} %",
             f"- Framing *{fr['framing_guess']}* · visual center {fr['visual_center_norm']} · symmetry {fr['symmetry']} · negative space {fr['negative_space']}",
         ]
         if fr.get("faces"):
             L.append(f"- Faces: {fr['faces']['count']} · shot size *{fr['faces']['shot_size_estimate']}*")
+        if r.get("subject"):
+            L.append(f"- Subject (in-focus region) {r['subject']['box_px']} px · palette {_swatches(r['subject']['palette'], 5)}")
         L += forensics_md(r.get("forensics"))
         sw = "".join(
             f'<div><i style="background:{c["hex"]}"></i>{c["hex"]} · {c["share"] * 100:.0f}%</div>' for c in r["palette"]
@@ -123,6 +126,8 @@ def write_media_reports(r: dict, out_dir: str) -> None:
             + _dl(
                 [
                     ("Depth of field", f"{o['depth_of_field_guess']} (sharp {o['sharp_area_share']})"),
+                    ("Focus falloff", o.get("focus_falloff_guess")),
+                    ("Subject palette", " ".join(c["hex"] for c in (r.get("subject") or {}).get("palette", []))),
                     ("Vignette", f"{o['vignette_guess']} ({o['vignette_corner_to_center']})"),
                     ("Grain", f"{o['grain_guess']} (σ {o['grain_noise_std']})"),
                     ("Framing", f"{fr['framing_guess']} · center {fr['visual_center_norm']}"),

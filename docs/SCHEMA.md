@@ -35,7 +35,7 @@ shots[]
   palette                 [{hex, share, lab}]
   grade
     luma_mean, luma_p5_p50_p95, contrast_std, dynamic_range_p95_p5   (L* 0–100)
-    crushed_blacks_pct, clipped_whites_pct, black_point_L, saturation_mean (0–1)
+    crushed_blacks_pct, clipped_whites_pct, black_point_L, saturation_mean (HSV S, 0–1, mean over all pixels; muted-looking browns can still score mid)
     white_balance_ab [a*, b*], shadows_tint_ab, highlights_tint_ab, shadows_hue, highlights_hue
     look_labels           inferred labels derived from the numbers
   framing
@@ -88,6 +88,9 @@ PAL speed-up) and trims shift them — record which file you indexed.
 optics
   sharp_area_share         share of 8×8 cells with ≥35 % of the sharpest cell's detail
   focus_center_norm        [x, y] centre of the sharp cells
+  sharp_region_box_norm    [x0, y0, x1, y1] bounding box of the sharp cells
+  focus_falloff_width_pct  distance (% of the short side) over which detail fades from sharp to blur
+  focus_falloff_guess      abrupt (≤3 %: cut-out/composite likely) | gradual (optical DOF)   (inferred)
   depth_of_field_guess     shallow | medium | deep | undetermined (too little texture)   (inferred)
   vignette_corner_to_center, vignette_guess
   grain_noise_std, grain_guess                                   residual σ in the flattest 30 %
@@ -114,6 +117,7 @@ forensics                  everything read from the file itself (measured; can b
 source {input, platform, file} · image {width, height, aspect_ratio, format_guess}
 forensics · camera_and_lens {Make, Model, LensModel, FocalLength…, field_of_view_class}
 palette · grade · framing · active_area · optics · artifacts {preview}
+subject                    null | {box_norm, box_px, palette, grade}   the in-focus region (photos)
 ```
 
 ## Audio (`kind: "audio"`)

@@ -66,12 +66,18 @@ Read `analysis.json → forensics` and follow `references/tool_fingerprints.md` 
 - If you have web access: look for the creator's BTS posts, captions and tutorials, and point
   reverse image search at the key frames. Cite what you find.
 - If metadata is stripped (normal after a platform re-encode), say so and move to pixel evidence.
+- Check embedded recipes against the pixels. The plan's ⚠ lines flag mismatches, for example an
+  embedded grain setting on an image that measures clean. When they disagree, say so: the recipe
+  may belong to a different export, so tag its applicability [I].
 
 ### 3. Observe
 Contact sheet → each `*_mid.jpg` → `in/out` frames for moving shots (for photos: `preview.jpg`).
 Per shot: size, angle, lens estimate, lighting, action, on-screen text, story function, using
 `references/shot_glossary.md`. Check what the measured optics say (`optics`: depth of field, vignette,
-grain) before estimating a lens.
+grain) before estimating a lens. A shallow `depth_of_field_guess` does not prove a lens effect:
+`focus_falloff_guess: abrupt` means the sharp region was most likely cut out or composited. For
+photos, describe the subject from `subject` (box and palette), not from the background-dominated
+global palette.
 
 ### 4. References
 Follow `references/cinematic_reference_protocol.md`. Propose films, directors and DPs per shot or
@@ -100,7 +106,8 @@ optics, tools per tier and an AI prompt per shot. Then:
   fps, lens class, Lightroom values.
 - For the edit, list shots in order with durations (the EDL), and cut on the beat when
   `cuts_on_beat_ratio` is high.
-Use `references/replication_template.md` for the structure.
+Use `references/replication_template.md` for the structure. It has a section for each kind:
+video, photo and audio.
 
 ### 7. Validate
 After a replica exists:
@@ -114,4 +121,5 @@ Report the 0–100 score and which component to fix first. Iterate on the lowest
 1. A 5–8 line teardown: what it is, the core trick, top references and tools, with tags.
 2. The replication plan adapted to their conditions: steps, gear, tools with links, prompts.
 3. Unknowns and how to resolve them.
-4. File paths: `report.html`, `replication_plan.md`, `dossier.md`.
+4. File paths: `report.html` and `replication_plan.md` (plus `dossier.md` for videos). If the
+   environment can publish HTML pages or artifacts, offer to publish `report.html` for sharing.

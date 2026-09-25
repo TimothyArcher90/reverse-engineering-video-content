@@ -4,7 +4,7 @@ What has been tested, how, and what the numbers were. Anything not listed here i
 
 ## 1. Automated tests (CI, every push)
 
-31 tests on synthetic videos, photos and audio with known ground truth (`tests/`):
+34 tests on synthetic videos, photos and audio with known ground truth (`tests/`):
 
 | Area | What is asserted |
 |---|---|
@@ -24,6 +24,8 @@ What has been tested, how, and what the numbers were. Anything not listed here i
 | AI forensics | PNG with Automatic1111 parameters → prompt, seed and sampler recovered; tool = Stable Diffusion |
 | Creator claims | Tools named in the post text are reported as `creator_mention`, never as file evidence |
 | Optics | Sharp centre on a blurred field → shallow DOF, focus at centre, vignette detected; flat image → `undetermined` |
+| Composite vs lens | Sharp square pasted on a blur → falloff *abrupt* (2.0 % of short side); radial defocus ramp → *gradual* (4.5 %) |
+| Photo subject | In-focus box located on the pasted square; still-image prompts carry no motion negatives |
 | Key / tempo | A-minor triad at 120 BPM → A minor (or relative C major), 120 ± 1.5 BPM (reads 120.0) |
 | Plans | Every measured shot appears with its duration; measured pan reaches the shot list; all tiers present |
 | Catalog | No price figures, HTTPS links, unique names, `prices_verified: false` |

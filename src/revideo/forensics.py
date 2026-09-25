@@ -263,30 +263,28 @@ RULES: list[tuple[str, str, str, str]] = [
 ]
 
 
-def _flatten(d, out: list[str]) -> list[str]:
+def _flatten(d, out: list[str], path: str = "") -> list[str]:
+    """Leaf values as "path.to.key: value" lines, so evidence names the field it came from."""
     if isinstance(d, dict):
         for k, v in d.items():
-            out.append(str(k))
-            _flatten(v, out)
+            _flatten(v, out, f"{path}.{k}" if path else str(k))
     elif isinstance(d, list):
         for v in d:
-            _flatten(v, out)
+            _flatten(v, out, path)
     elif d is not None:
-        out.append(str(d))
+        out.append(f"{path}: {d}".replace("\n", " "))
     return out
 
 
 def fingerprints(meta: dict, level: str = "measured") -> list[dict]:
     """`level`: "measured" for file metadata; "creator_mention" for the post's title/description/tags."""
-    text = "\n".join(_flatten(meta, []))
-    low = text.lower()
+    fields = _flatten(meta, [])
     hits = []
     for pat, tool, cat, means in RULES:
-        m = re.search(pat, low)
-        if m:
-            i = m.start()
-            ctx = text[max(0, i - 40) : i + 60].replace("\n", " | ")
-            hits.append({"tool": tool, "category": cat, "means": means, "evidence": ctx.strip(), "level": level})
+        field = next((f for f in fields if re.search(pat, f.lower())), None)
+        if field:
+            ev = field if len(field) <= 160 else field[:157] + "…"
+            hits.append({"tool": tool, "category": cat, "means": means, "evidence": ev, "level": level})
     # a specific editor beats the generic FFmpeg-libs line; keep both but order specific first
     hits.sort(key=lambda h: h["tool"] == "FFmpeg libraries")
     return hits
@@ -303,7 +301,11 @@ def gather(path: str, platform: dict | None = None) -> dict:
         "xmp": xmp(raw),
         "c2pa_manifest_present": b"c2pa" in raw and b"jumb" in raw,
     }
-    if kind == "image":
+    if kind == "image":  # ffmpeg reports stills as a 1-frame 25 fps stream: drop the timing noise
+        for s in meta["container"].get("streams", []):
+            s.pop("fps", None)
+            s["desc"] = re.sub(r", [\d.]+ (fps|tbr|tbn).*$", "", s["desc"])
+        meta["container"].pop("duration_line", None)
         meta["exif"] = exif(path)
         meta["png_text"] = png_text(path)
     meta["tool_fingerprints"] = fingerprints({k: v for k, v in meta.items() if k != "file"})

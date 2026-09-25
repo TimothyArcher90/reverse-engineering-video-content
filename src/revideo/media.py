@@ -43,6 +43,24 @@ def _lens_from_exif(ex: dict) -> dict:
     return out
 
 
+def _subject(img, o: dict) -> dict | None:
+    """Palette of the in-focus region: the global palette is dominated by the background."""
+    box = o.get("sharp_region_box_norm")
+    if not box or o["sharp_area_share"] >= 0.6:
+        return None
+    h, w = img.shape[:2]
+    x0, y0, x1, y1 = int(box[0] * w), int(box[1] * h), int(box[2] * w), int(box[3] * h)
+    crop = img[y0:y1, x0:x1]
+    if crop.size == 0:
+        return None
+    return {
+        "box_norm": box,
+        "box_px": [x0, y0, x1, y1],
+        "palette": color.palette([crop], k=5),
+        "grade": color.grade_stats([crop]),
+    }
+
+
 def analyze_image(source: str, out_dir: str, quiet: bool = False) -> dict:
     from .pipeline import SCHEMA_VERSION
 
@@ -70,7 +88,8 @@ def analyze_image(source: str, out_dir: str, quiet: bool = False) -> dict:
         "grade": color.grade_stats([active]),
         "framing": composition.analyze_frame(img),
         "active_area": composition.active_area(img),
-        "optics": optics.analyze(active),
+        "optics": (o := optics.analyze(active)),
+        "subject": _subject(active, o),
         "artifacts": {"preview": "preview.jpg"},
     }
     result["tool"]["elapsed_sec"] = round(time.time() - t0, 2)
