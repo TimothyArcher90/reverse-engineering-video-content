@@ -4,6 +4,27 @@ Heuristics to infer *how* something was produced. Every entry is a **tell-tale s
 All conclusions are **[I]** unless the creator states the tool or file metadata proves it.
 Tools change their defaults often — treat this list as a starting point and keep it updated.
 
+## 0. Read the file first (strongest evidence)
+`analysis.json → forensics` holds what the file says about itself [M]. Rank evidence:
+1. **Embedded recipes**: `xmp.camera_raw_settings` (Lightroom/ACR sliders, copy 1:1), `png_text.parameters`
+   (Automatic1111: prompt, seed, sampler, CFG), `png_text.prompt`/`workflow` (ComfyUI graph).
+2. **Tool strings**: `tool_fingerprints` (CreatorTool, encoder, handler names, QuickTime make/model/software).
+3. **Declarations**: IPTC `DigitalSourceType` = `trainedAlgorithmicMedia` (AI-generated) or
+   `compositeWithTrainedAlgorithmicMedia` (AI-edited); `c2pa_manifest_present` (validate before trusting).
+4. **Creator mentions**: `tools_mentioned_in_post` = the post's own text. It is a claim, not proof: tag [O].
+5. Pixels (tables below): always [I].
+
+`metadata_stripped_likely: true` is normal for anything downloaded from Instagram/TikTok/YouTube: the
+platform re-encodes. Then only 4 and 5 remain; say so instead of guessing a tool.
+
+| Container sign [M] | Hypothesis |
+|---|---|
+| `encoder: Lavf…` only | muxed with FFmpeg libraries: a platform re-encode or many apps; not a specific editor |
+| `handler_name: Core Media Video`, `com.apple.quicktime.*` | Apple device/framework; `model`/`software` give the iPhone and iOS |
+| `com.android.version` | recorded on Android |
+| `smpte2084` / `arib-std-b67` in the video stream | HDR (PQ / HLG): recent phone or HDR camera workflow |
+| `major_brand: isom` + `Google` strings | YouTube/Google processing |
+
 ## Capture
 | Sign | Hypothesis |
 |---|---|

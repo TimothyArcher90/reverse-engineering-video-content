@@ -1,0 +1,282 @@
+{
+  "about": "Tool catalog for replication plans. pricing_model is from general knowledge and NOT verified against current price pages; features and prices change often. The daily workflow checks that every URL still answers; before quoting a price, open the URL (or web-search) and cite the date. Edit this file to add tools.",
+  "catalog_date": "2026-09-25",
+  "prices_verified": false,
+  "tools": [
+    {
+      "name": "CapCut",
+      "category": "edit",
+      "tiers": [
+        "phone",
+        "creator"
+      ],
+      "pricing_model": "freemium",
+      "platforms": "iOS, Android, desktop, web",
+      "url": "https://www.capcut.com",
+      "good_for": "fast social edits, auto-captions, templates, beat sync"
+    },
+    {
+      "name": "DaVinci Resolve",
+      "category": "edit+color",
+      "tiers": [
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "free version + paid Studio (one-time)",
+      "platforms": "Windows, macOS, Linux, iPad",
+      "url": "https://www.blackmagicdesign.com/products/davinciresolve",
+      "good_for": "color grading, editing, Fusion VFX, Fairlight audio"
+    },
+    {
+      "name": "Adobe Premiere Pro",
+      "category": "edit",
+      "tiers": [
+        "pro"
+      ],
+      "pricing_model": "subscription",
+      "platforms": "Windows, macOS",
+      "url": "https://www.adobe.com/products/premiere.html",
+      "good_for": "professional editing, Adobe ecosystem"
+    },
+    {
+      "name": "Final Cut Pro",
+      "category": "edit",
+      "tiers": [
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "one-time purchase (Mac); subscription on iPad",
+      "platforms": "macOS, iPad",
+      "url": "https://www.apple.com/final-cut-pro/",
+      "good_for": "fast editing on Apple hardware"
+    },
+    {
+      "name": "Adobe After Effects",
+      "category": "motion",
+      "tiers": [
+        "pro"
+      ],
+      "pricing_model": "subscription",
+      "platforms": "Windows, macOS",
+      "url": "https://www.adobe.com/products/aftereffects.html",
+      "good_for": "motion graphics, kinetic type, compositing"
+    },
+    {
+      "name": "Blender",
+      "category": "3d+motion",
+      "tiers": [
+        "phone",
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "free (open source)",
+      "platforms": "Windows, macOS, Linux",
+      "url": "https://www.blender.org",
+      "good_for": "3D, camera tracking, compositing, VSE editing"
+    },
+    {
+      "name": "Adobe Lightroom",
+      "category": "photo+color",
+      "tiers": [
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "subscription (free mobile tier)",
+      "platforms": "iOS, Android, desktop",
+      "url": "https://www.adobe.com/products/photoshop-lightroom.html",
+      "good_for": "photo grading, presets (reads/writes Camera Raw settings)"
+    },
+    {
+      "name": "darktable",
+      "category": "photo+color",
+      "tiers": [
+        "phone",
+        "creator"
+      ],
+      "pricing_model": "free (open source)",
+      "platforms": "Windows, macOS, Linux",
+      "url": "https://www.darktable.org",
+      "good_for": "raw development without subscription"
+    },
+    {
+      "name": "Snapseed",
+      "category": "photo",
+      "tiers": [
+        "phone"
+      ],
+      "pricing_model": "free",
+      "platforms": "iOS, Android",
+      "url": "https://play.google.com/store/apps/details?id=com.niksoftware.snapseed",
+      "good_for": "quick mobile photo edits"
+    },
+    {
+      "name": "GIMP",
+      "category": "photo",
+      "tiers": [
+        "phone",
+        "creator"
+      ],
+      "pricing_model": "free (open source)",
+      "platforms": "Windows, macOS, Linux",
+      "url": "https://www.gimp.org",
+      "good_for": "retouching, compositing"
+    },
+    {
+      "name": "Adobe Photoshop",
+      "category": "photo",
+      "tiers": [
+        "pro"
+      ],
+      "pricing_model": "subscription",
+      "platforms": "Windows, macOS, iPad, web",
+      "url": "https://www.adobe.com/products/photoshop.html",
+      "good_for": "retouching, compositing, generative fill"
+    },
+    {
+      "name": "Runway",
+      "category": "ai-video",
+      "tiers": [
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "freemium / credits",
+      "platforms": "web, iOS",
+      "url": "https://runwayml.com",
+      "good_for": "image-to-video, video-to-video, camera control"
+    },
+    {
+      "name": "Kling",
+      "category": "ai-video",
+      "tiers": [
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "freemium / credits",
+      "platforms": "web",
+      "url": "https://klingai.com",
+      "good_for": "image-to-video, motion"
+    },
+    {
+      "name": "Luma Dream Machine",
+      "category": "ai-video",
+      "tiers": [
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "freemium / subscription",
+      "platforms": "web, iOS",
+      "url": "https://lumalabs.ai",
+      "good_for": "image-to-video, keyframes"
+    },
+    {
+      "name": "Higgsfield",
+      "category": "ai-video",
+      "tiers": [
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "subscription / credits",
+      "platforms": "web",
+      "url": "https://higgsfield.ai",
+      "good_for": "camera-move presets, social formats"
+    },
+    {
+      "name": "HeyGen",
+      "category": "ai-avatar",
+      "tiers": [
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "freemium / subscription",
+      "platforms": "web",
+      "url": "https://www.heygen.com",
+      "good_for": "talking avatars, translation, lip-sync"
+    },
+    {
+      "name": "ElevenLabs",
+      "category": "ai-audio",
+      "tiers": [
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "freemium / subscription",
+      "platforms": "web, API",
+      "url": "https://elevenlabs.io",
+      "good_for": "voice-over, voice cloning, SFX"
+    },
+    {
+      "name": "Audacity",
+      "category": "audio",
+      "tiers": [
+        "phone",
+        "creator"
+      ],
+      "pricing_model": "free (open source)",
+      "platforms": "Windows, macOS, Linux",
+      "url": "https://www.audacityteam.org",
+      "good_for": "audio cleanup, levels, cuts"
+    },
+    {
+      "name": "Canva",
+      "category": "design",
+      "tiers": [
+        "phone",
+        "creator"
+      ],
+      "pricing_model": "freemium",
+      "platforms": "web, iOS, Android, desktop",
+      "url": "https://www.canva.com",
+      "good_for": "titles, thumbnails, simple animations"
+    },
+    {
+      "name": "Midjourney",
+      "category": "ai-image",
+      "tiers": [
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "subscription",
+      "platforms": "web, Discord",
+      "url": "https://www.midjourney.com",
+      "good_for": "stylized, cinematic stills; style references"
+    },
+    {
+      "name": "Adobe Firefly",
+      "category": "ai-image",
+      "tiers": [
+        "phone",
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "freemium / credits",
+      "platforms": "web, Photoshop",
+      "url": "https://www.adobe.com/products/firefly.html",
+      "good_for": "images and generative fill inside Adobe apps"
+    },
+    {
+      "name": "ComfyUI",
+      "category": "ai-image+ai-video",
+      "tiers": [
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "free (open source; needs a GPU or cloud)",
+      "platforms": "Windows, macOS, Linux",
+      "url": "https://www.comfy.org",
+      "good_for": "exact, repeatable node workflows (Stable Diffusion, Flux, video models)"
+    },
+    {
+      "name": "Suno",
+      "category": "ai-audio",
+      "tiers": [
+        "phone",
+        "creator",
+        "pro"
+      ],
+      "pricing_model": "freemium / subscription",
+      "platforms": "web, iOS",
+      "url": "https://suno.com",
+      "good_for": "AI songs from a text description (check license terms for commercial use)"
+    }
+  ]
+}

@@ -18,8 +18,9 @@ def main(argv=None) -> int:
     p.add_argument("--version", action="version", version=f"revideo {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    a = sub.add_parser("analyze", help="measure a video (URL or file) → analysis.json, report.md, dossier.md")
+    a = sub.add_parser("analyze", help="measure a video, photo or audio file (path or URL) → analysis.json, reports, plan")
     a.add_argument("source")
+    a.add_argument("--kind", choices=["video", "image", "audio"], help="force the input type (default: from the extension)")
     a.add_argument("-o", "--out", default=None, help="output dir (default: runs/<name>)")
     a.add_argument("--threshold", type=float, default=0.3, help="builtin cut detector sensitivity (lower = more cuts)")
     a.add_argument(
@@ -56,25 +57,61 @@ def main(argv=None) -> int:
     c.add_argument("replica")
     c.add_argument("--json", action="store_true")
 
+    pl = sub.add_parser("plan", help="(re)write replication_plan.md: per-shot specs, grade recipe, gear and tools per budget")
+    pl.add_argument("analysis_dir")
+
+    sub.add_parser("tools", help="list the tool catalog used by replication plans")
     sub.add_parser("doctor", help="check dependencies")
 
     args = p.parse_args(argv)
 
     if args.cmd == "analyze":
-        from .pipeline import analyze
+        from .advise import write_plan
+        from .forensics import media_kind
 
-        name = os.path.splitext(os.path.basename(args.source.rstrip("/")))[0] or "video"
+        name = os.path.splitext(os.path.basename(args.source.split("?")[0].rstrip("/")))[0] or "media"
         out = args.out or os.path.join("runs", "".join(ch if ch.isalnum() or ch in "-_" else "_" for ch in name)[:60])
-        analyze(
-            args.source,
-            out,
-            threshold=args.threshold,
-            engine=args.engine,
-            no_audio=args.no_audio,
-            no_motion=args.no_motion,
-            whisper=args.whisper,
-            quiet=args.quiet,
-        )
+        os.makedirs(out, exist_ok=True)
+        kind = args.kind or media_kind(args.source)
+        if kind == "image":
+            from .media import analyze_image
+
+            analyze_image(args.source, out, quiet=args.quiet)
+        elif kind == "audio":
+            from .media import analyze_audio
+
+            analyze_audio(args.source, out, whisper=args.whisper, quiet=args.quiet)
+        else:
+            from .pipeline import analyze
+
+            analyze(
+                args.source,
+                out,
+                threshold=args.threshold,
+                engine=args.engine,
+                no_audio=args.no_audio,
+                no_motion=args.no_motion,
+                whisper=args.whisper,
+                quiet=args.quiet,
+            )
+        plan_path = write_plan(out)
+        if not args.quiet:
+            print(f"▸ replication plan → {plan_path}")
+        return 0
+
+    if args.cmd == "plan":
+        from .advise import write_plan
+
+        print(f"replication plan → {write_plan(args.analysis_dir)}")
+        return 0
+
+    if args.cmd == "tools":
+        from .advise import load_catalog
+
+        cat = load_catalog()
+        print(f"catalog {cat['catalog_date']} · prices verified: {cat['prices_verified']}")
+        for t in cat["tools"]:
+            print(f"- {t['name']:<22} {t['category']:<12} {'/'.join(t['tiers']):<20} {t['pricing_model']:<40} {t['url']}")
         return 0
 
     if args.cmd == "index-ref":
@@ -135,12 +172,12 @@ def main(argv=None) -> int:
         from .video import find_ffmpeg
 
         ok = True
-        for mod in ("numpy", "cv2", "scenedetect", "yt_dlp", "faster_whisper"):
+        for mod in ("numpy", "cv2", "PIL", "scenedetect", "yt_dlp", "faster_whisper"):
             try:
                 __import__(mod)
                 print(f"✓ {mod}")
             except ImportError:
-                req = mod in ("numpy", "cv2")
+                req = mod in ("numpy", "cv2", "PIL")
                 ok &= not req
                 print(f"{'✗' if req else '·'} {mod} {'(required)' if req else '(optional)'}")
         print(f"{'✓' if find_ffmpeg() else '·'} ffmpeg (optional, needed for audio)")

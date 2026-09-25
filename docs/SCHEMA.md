@@ -1,10 +1,11 @@
-# `analysis.json` schema (schema_version 1)
+# `analysis.json` schema (schema_version 2)
 
 All values are **measured** unless marked otherwise. Times are seconds; timecodes are
 `HH:MM:SS:FF` (non-drop-frame) at the analyzed video's fps. Paths are relative to the run folder.
 
 ```text
 schema_version            int      bump = breaking change; `revideo report` refuses other versions
+kind                      "video" | "image" | "audio"   (photo and audio layouts at the end)
 tool                      {name, version, elapsed_sec,
                            detector: {engine, threshold, min_shot_len_frames, decoded_frames,
                                       flash_rejected_cuts, container_reported_frames?}}
@@ -42,6 +43,7 @@ shots[]
     symmetry, edge_density, negative_space,
     faces                 null | {count, largest_box_norm, largest_center_norm, headroom_norm, shot_size_estimate}
   active_area             {box [x0,y0,x1,y1], aspect_ratio, letterboxed}
+  optics                  see "optics" below (measured on the mid keyframe)
   camera                  {type, pan_pct_w_per_s, tilt_pct_w_per_s, zoom_pct_per_s, roll_deg_per_s,
                            jitter, subject_motion_px, track_inlier_ratio, note}
   interpretation          {shot_size, angle, lens_mm_estimate, lighting, subject_action, on_screen_text,
@@ -51,7 +53,11 @@ shots[]
 transcript                [{start, end, text}]     platform subtitles or faster-whisper
 audio                     {duration_sec, loudness_mean_dbfs, loudness_peak_dbfs, silence_pct,
                            tempo_bpm_estimate, beat_times[], onset_times[], cuts_on_beat_ratio,
-                           cuts_on_onset_ratio, loudness_curve_1s_db[], note} | {error}
+                           cuts_on_onset_ratio, loudness_curve_1s_db[], note,
+                           key_estimate {key, confidence_r, runner_up, note},
+                           spectral {energy_share_pct {band: %}, spectral_centroid_hz, brightness_guess,
+                                     crest_factor_db}} | {error}
+forensics                 see "forensics" below
 artifacts                 {keyframes_dir, contact_sheet}
 evidence_legend           which fields carry which evidence level
 ```
@@ -75,3 +81,45 @@ closest                   {hash_distance, correlation} | null   — no film time
 
 Timecodes refer to the **indexed file**. Editions (theatrical/extended), frame rates (24 vs 25 fps
 PAL speed-up) and trims shift them — record which file you indexed.
+
+## Shared blocks
+
+```text
+optics
+  sharp_area_share         share of 8×8 cells with ≥35 % of the sharpest cell's detail
+  focus_center_norm        [x, y] centre of the sharp cells
+  depth_of_field_guess     shallow | medium | deep | undetermined (too little texture)   (inferred)
+  vignette_corner_to_center, vignette_guess
+  grain_noise_std, grain_guess                                   residual σ in the flattest 30 %
+  clipped_highlights_pct, crushed_shadows_pct
+
+forensics                  everything read from the file itself (measured; can be stripped/rewritten)
+  kind, file {name, bytes}
+  container                {format {tag: value}, streams [{type, desc, tags, codec, width, height, fps,
+                            hdr (smpte2084 | arib-std-b67 | null), dolby_vision, bitrate_kbps}]}
+  xmp                      {CreatorTool, Software, DigitalSourceType, CreateDate, ModifyDate,
+                            history_agents[], camera_raw_settings {Exposure2012, Contrast2012, …}}
+  exif                     (photos) {Make, Model, LensModel, FocalLength, FocalLengthIn35mmFilm, FNumber,
+                            ExposureTime, ShutterSpeed, ISO, Software, DateTimeOriginal, …}
+  png_text                 (PNG) {parameters (Automatic1111), prompt / workflow (ComfyUI JSON), Software, …}
+  c2pa_manifest_present    byte signature only (not a validated manifest)
+  tool_fingerprints        [{tool, category, means, evidence, level: "measured"}]
+  tools_mentioned_in_post  [{…, level: "creator_mention"}]   from the post title/description/tags
+  metadata_stripped_likely bool
+```
+
+## Photo (`kind: "image"`)
+
+```text
+source {input, platform, file} · image {width, height, aspect_ratio, format_guess}
+forensics · camera_and_lens {Make, Model, LensModel, FocalLength…, field_of_view_class}
+palette · grade · framing · active_area · optics · artifacts {preview}
+```
+
+## Audio (`kind: "audio"`)
+
+```text
+source {input, platform, file} · forensics · audio (as above, cuts_* = null) · transcript
+```
+
+Every run folder also gets `replication_plan.md` (see `revideo plan`).

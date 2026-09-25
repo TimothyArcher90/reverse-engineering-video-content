@@ -10,11 +10,11 @@ from collections import Counter
 import cv2
 import numpy as np
 
-from . import __version__, audio, color, composition, evidence, ingest, motion
+from . import __version__, audio, color, composition, evidence, forensics, ingest, motion, optics
 from . import shots as shotmod
 from .video import probe, timecode
 
-SCHEMA_VERSION = 1  # bump when analysis.json changes shape
+SCHEMA_VERSION = 2  # bump when analysis.json changes shape (2: kind, forensics, optics, photo/audio inputs)
 
 
 def _rel(path: str, start: str) -> str:
@@ -69,6 +69,7 @@ def analyze(
             rec["grade"] = color.grade_stats(active)
             rec["framing"] = composition.analyze_frame(mid)
             rec["active_area"] = composition.active_area(mid)
+            rec["optics"] = optics.analyze(composition.crop_active(mid))
         if not no_motion:
             rec["camera"] = motion.analyze_shot(video, s.start_frame, s.end_frame, info.fps)
         rec["interpretation"] = {
@@ -103,11 +104,15 @@ def analyze(
         else:
             audio_rep = {"error": "no audio stream or ffmpeg unavailable"}
 
-    _log("L4 global fingerprint", quiet)
+    _log("L4 forensics (container tags, XMP, tool fingerprints)", quiet)
+    meta = forensics.gather(video, acq["meta"])
+
+    _log("L5 global fingerprint", quiet)
     fp = fingerprint(info, shot_list, per_shot, all_frames, audio_rep)
 
     result = {
         "schema_version": SCHEMA_VERSION,
+        "kind": "video",
         "tool": {"name": "revideo", "version": __version__, "detector": det, "elapsed_sec": None},
         "source": {
             "input": source,
@@ -115,12 +120,13 @@ def analyze(
             "video": {**info.to_dict(), "path": _rel(video, out_dir)},
         },
         "fingerprint": fp,
+        "forensics": meta,
         "shots": per_shot,
         "transcript": transcript,
         "audio": audio_rep,
         "artifacts": {"keyframes_dir": "keyframes", "contact_sheet": os.path.basename(sheet) if sheet else None},
         "evidence_legend": {
-            evidence.MEASURED: "fingerprint, shots[*].palette/grade/framing/active_area/camera, audio",
+            evidence.MEASURED: "fingerprint, forensics, shots[*].palette/grade/framing/active_area/optics/camera, audio",
             evidence.VERIFIED: "shots[*].reference_match (from match-ref)",
             f"{evidence.OBSERVED}/{evidence.INFERRED}": "written by the agent in dossier.md and shots[*].interpretation",
         },

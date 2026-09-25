@@ -3,13 +3,39 @@
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## [0.3.0] — 2026-09-25
+
+The master-copycat release: photos and sound as well as video, everything the file says about how it
+was made, and a replication plan per budget and condition.
+
 ### Added
+- **Photos and audio**: `analyze` routes by extension (`--kind` to force). Photos get palette, grade,
+  framing, optics and EXIF; audio gets tempo, key, spectral balance and dynamics.
+- **Forensics** (`forensics.py`, every input): container/stream tags, EXIF, XMP with Lightroom/Camera Raw
+  sliders, PNG generation parameters (Automatic1111, ComfyUI), IPTC AI declarations, C2PA signature, HDR
+  flags, and tool fingerprints with the matched string as evidence. Tools named in the post text are
+  kept separately as creator claims.
+- **Optics**: depth of field, focus centre, vignette, grain and clipping, for photos and each video shot.
+- **Audio**: key estimate (Krumhansl–Kessler), energy per band, spectral centroid, crest factor; BPM
+  now uses sub-frame peak interpolation (the 120 BPM test signal reads 120.0, it read 117.5).
+- **`replication_plan.md`** for every run (`plan` command): target spec, EDL with rig per tier,
+  grade recipe (exact Lightroom values when embedded), optics, paths by budget and condition, AI
+  prompt per shot. Tool catalog `src/revideo/data/tools.json` (`tools` command) with pricing *models*
+  and official links, marked unverified.
+- **`compare`** scores photo and audio replicas too.
+- **Daily workflow**: newest dependencies + tests, catalog link check, fresh `.skill` build.
+- Direct links to photos/audio are downloaded without yt-dlp; yt-dlp failures suggest `setup --update`.
 - Self-contained skill package: `tools/build_skill.py` → `dist/reverse-engineering-video.skill`, bundling the
-  `revideo` source. The launcher `skill/scripts/revideo.py` installs numpy/opencv on first use (yt-dlp and
+  `revideo` source. The launcher `skill/scripts/revideo.py` installs numpy/opencv/pillow on first use (yt-dlp and
   imageio-ffmpeg only when needed); `REVIDEO_NO_INSTALL=1` turns that off.
 - CI job that builds the `.skill` and uploads it as an artifact; test that the unpacked package runs on its own.
 
+### Changed
+- `analysis.json` schema 2: `kind`, `forensics`, `shots[].optics`, audio `key_estimate`/`spectral`.
+  Re-run `analyze` for runs made with 0.2.
+- SKILL.md: acts without asking, gathers file evidence first, adapts the plan to the user's conditions,
+  never quotes prices from memory.
+- New dependency: Pillow.
 ## [0.2.0] — 2026-09-24
 
 Hardened against real footage. See [`docs/VALIDATION.md`](docs/VALIDATION.md).

@@ -51,6 +51,18 @@ def acquire(source: str, workdir: str, max_height: int = 1080) -> dict:
         subs = [p for p in glob.glob(os.path.splitext(source)[0] + "*.vtt") + glob.glob(os.path.splitext(source)[0] + "*.srt")]
         return {"video": dest, "meta": {"source": "local_file", "filename": os.path.basename(source)}, "subtitles": subs}
 
+    from .forensics import media_kind
+
+    if media_kind(source) != "video":  # direct link to a photo or an audio file: plain download
+        import urllib.request
+
+        name = os.path.basename(source.split("?")[0]) or "download"
+        dest = os.path.join(src_dir, name)
+        req = urllib.request.Request(source, headers={"User-Agent": "Mozilla/5.0 revideo"})
+        with urllib.request.urlopen(req, timeout=60) as r, open(dest, "wb") as f:
+            shutil.copyfileobj(r, f)
+        return {"video": dest, "meta": {"source": "direct_url", "url": source}, "subtitles": []}
+
     try:
         import yt_dlp
     except ImportError as e:  # pragma: no cover
@@ -76,7 +88,13 @@ def acquire(source: str, workdir: str, max_height: int = 1080) -> dict:
     if find_ffmpeg():
         opts["ffmpeg_location"] = find_ffmpeg()
     with yt_dlp.YoutubeDL(opts) as ydl:
-        info = ydl.extract_info(source, download=True)
+        try:
+            info = ydl.extract_info(source, download=True)
+        except yt_dlp.utils.DownloadError as e:
+            raise RuntimeError(
+                f"{e}\nPlatforms change their pages often: update the downloader (`revideo.py setup --update`, "
+                "i.e. pip install -U yt-dlp) or download the file yourself and pass its path."
+            ) from e
         video = ydl.prepare_filename(info)
     if not os.path.exists(video):
         cands = [p for p in glob.glob(os.path.join(src_dir, "video.*")) if not p.endswith((".json", ".vtt"))]
