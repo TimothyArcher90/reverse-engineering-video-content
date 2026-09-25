@@ -62,7 +62,7 @@ El skill trae la herramienta dentro y las dependencias se instalan solas la prim
 
 | Dónde | Cómo |
 |---|---|
-| claude.ai / app de Claude | Descarga `reverse-engineering-video.skill` (artefacto del CI o `python tools/build_skill.py`) y súbelo en *Settings → Capabilities → Skills* |
+| claude.ai / app de Claude | Descarga `reverse-engineering-video.skill` de la [última release](https://github.com/TimothyArcher90/reverse-engineering-video-content/releases/latest) (o `python tools/build_skill.py`) y súbelo en la sección de Skills de la configuración |
 | Claude Code | `./install_skill.sh` (enlaza `skill/`) o descomprime el `.skill` en `~/.claude/skills/` |
 
 Luego pide *"haz ingeniería inversa de este reel: &lt;link&gt;"*. En claude.ai, las descargas desde URL

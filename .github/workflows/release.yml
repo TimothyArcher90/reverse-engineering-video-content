@@ -1,0 +1,28 @@
+name: release
+# Attach a freshly built, self-contained .skill to every published release.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "release tag to attach the .skill to"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  skill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python tools/build_skill.py
+      - run: gh release upload "${{ github.event.release.tag_name || inputs.tag }}" dist/reverse-engineering-video.skill --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
