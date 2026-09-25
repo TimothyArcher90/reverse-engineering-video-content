@@ -24,7 +24,7 @@ Recognizing actors: name them only if they are publicly known performers in the 
 not identify private individuals.
 
 ## 3. Verification ladder (stop at the highest rung you can reach)
-1. **Frame match** (`revideo index-ref` + `match-ref`) → exact frame + timecode + crop + mirrored → **[V]**.
+1. **Frame match** (`$RV index-ref` + `$RV match-ref`) → exact frame + timecode + crop + mirrored → **[V]**.
 2. **Creator statement** (caption, description, comments by the author, BTS post) → **[V]**, cite it.
 3. **Credits database** for director/DP/year once the film is fixed (e.g. IMDb, TMDB) → **[V]** for credits.
 4. **Still libraries / reverse image search** on the keyframe (e.g. Google Lens, TinEye, FILMGRAB,

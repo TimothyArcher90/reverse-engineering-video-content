@@ -10,3 +10,4 @@ refs/
 *.webm
 *.wav
 *.npz
+dist/

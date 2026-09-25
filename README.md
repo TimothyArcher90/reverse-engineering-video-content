@@ -55,7 +55,17 @@ revideo doctor
 ```
 Opcional: `pip install -e ".[whisper]"` para transcribir cuando no hay subtítulos.
 
-**Como skill de Claude Code:** `./install_skill.sh` y luego pide *"haz ingeniería inversa de este reel: &lt;link&gt;"*.
+### Como skill (sin instalar nada a mano)
+
+El skill trae la herramienta dentro y las dependencias se instalan solas la primera vez.
+
+| Dónde | Cómo |
+|---|---|
+| claude.ai / app de Claude | Descarga `reverse-engineering-video.skill` (artefacto del CI o `python tools/build_skill.py`) y súbelo en *Settings → Capabilities → Skills* |
+| Claude Code | `./install_skill.sh` (enlaza `skill/`) o descomprime el `.skill` en `~/.claude/skills/` |
+
+Luego pide *"haz ingeniería inversa de este reel: &lt;link&gt;"*. En claude.ai, las descargas desde URL
+dependen de que el entorno de código tenga salida a internet; si no, sube el archivo de video.
 
 ## Uso
 

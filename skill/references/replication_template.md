@@ -27,5 +27,5 @@ Gear list · crew · locations · shooting order (group by setup, not by edit or
 5. **Export**: platform specs (resolution, AR, fps, bitrate, safe zones) — verify current platform specs.
 
 ## D. Validate
-`revideo analyze replica.mp4 -o runs/x-replica && revideo compare runs/x runs/x-replica`
+`$RV analyze replica.mp4 -o runs/x-replica && $RV compare runs/x runs/x-replica`
 Iterate on the lowest component score.

@@ -1,6 +1,6 @@
 ---
 name: reverse-engineering-video
-description: Full reverse engineering of a video (reel, TikTok, Short, ad, music video, film clip). Measures cuts, rhythm, color grade, framing, camera movement and sound with the `revideo` CLI, then identifies cinematic references (film, director, DP, exact timecode/frame), infers the production stack and workflow, and writes an evidence-tagged dossier plus a replication plan and prompt pack, validated by a fidelity score. Use when the user shares a video/link and asks how it was made, what it references, which tools/workflow were used, or to copy/recreate/replicate it — in any language ("ingeniería inversa", "cómo se hizo", "de qué película es", "replícalo", "reverse-engineer this").
+description: Full reverse engineering of a video (reel, TikTok, Short, ad, music video, film clip, trailer). Measures cuts, rhythm, color grade, framing, camera movement and sound with a bundled Python tool, finds cinematic references (film, director, DP, exact frame and timecode), infers the tools and workflow used, and writes an evidence-tagged dossier, a replication plan with per-shot AI prompts, and a 0-100 fidelity score for the replica. Use it whenever someone shares a video, a link or keyframes and wants to know how it was made, what film or director it references, what edit, color grade or camera style it uses, or wants to copy, recreate or replicate it, even if they never say reverse engineering. Triggers in any language, e.g. ingeniería inversa, cómo se hizo, de qué película es, qué paleta usa, replícalo, cópialo, analiza este reel, reverse-engineer this.
 ---
 
 # Reverse engineering of video content
@@ -10,13 +10,13 @@ and **how to rebuild it** — with every claim traceable to evidence.
 
 ## Non-negotiable rules
 
-1. **Measure before you interpret.** Run `revideo analyze` first. Never describe shots you have not
+1. **Measure before you interpret.** Run `$RV analyze` first. Never describe shots you have not
    looked at (keyframes / contact sheet). If you cannot see images, say so and stop at the measured report.
 2. **Tag every claim**: **[M]** measured · **[O]** observed in a frame · **[I]** inferred ·
    **[V]** verified against an external source · **[?]** unknown. A film reference, a director, a
    timecode, a tool, a lens — all are **[I]** until verified.
 3. **Never invent** a film, a timecode, a director, a DP, a song, a quote or a statistic. A reference
-   is only **[V]** if (a) `revideo match-ref` found the frame, or (b) a citable source (credits
+   is only **[V]** if (a) `$RV match-ref` found the frame, or (b) a citable source (credits
    database, ASC/BTS interview, the creator's own post) confirms it. Otherwise give candidates with
    confidence and the reason.
 4. **Numbers come from `analysis.json`.** Quote them, don't eyeball them.
@@ -31,9 +31,16 @@ If > 3 min, ask whether to analyze everything or a segment (the first 3–5 s us
 the value for short-form). Default: whole video.
 
 ### Phase 1 — Measure (tool)
+The measuring tool ships inside this skill. Call it through the launcher, using the skill's base
+directory (shown when the skill loads):
 ```bash
-revideo analyze "<url-or-file>" -o runs/<name>          # add --whisper small if no subtitles
+RV="python <skill-dir>/scripts/revideo.py"
+$RV analyze "<url-or-file>" -o runs/<name>             # add --whisper small if no subtitles
 ```
+First use installs numpy + opencv with pip (about 20 s); a URL also pulls yt-dlp, and a machine
+without ffmpeg gets imageio-ffmpeg for audio. If pip has no network, the launcher prints the exact
+install command: tell the user and continue from what you can see, marking measurements as [?].
+`$RV setup` installs everything up front and runs `doctor`.
 Produces `analysis.json` (schema: `docs/SCHEMA.md`), `report.html` + `report.md` (measured),
 `dossier.md` (template), `contact_sheet.jpg`, `keyframes/shot_XXX_{in,mid,out}.jpg`, `audio.wav`.
 Check `tool.detector` first: `flash_rejected_cuts` and `container_reported_frames` tell you when the
@@ -53,8 +60,8 @@ Follow `references/cinematic_reference_protocol.md`:
    (composition, palette, blocking, aspect ratio, grain, production design). Tag **[I]** + confidence.
 2. If the user has the candidate film file (or a trailer/clip), verify:
    ```bash
-   revideo index-ref film.mkv -o refs/film.npz --title "…" --director "…" --year 1999
-   revideo match-ref runs/<name> refs/film.npz
+   $RV index-ref film.mkv -o refs/film.npz --title "…" --director "…" --year 1999
+   $RV match-ref runs/<name> refs/film.npz
    ```
    A hit gives the exact **film frame and timecode**, *which* frame of the reel matched
    (`query_keyframe`, `query_timecode`), the estimated film timecode where the shot starts
@@ -87,8 +94,8 @@ Use `references/replication_template.md`:
 ### Phase 7 — Round-trip validation
 After the user (or you) produce a replica:
 ```bash
-revideo analyze replica.mp4 -o runs/<name>-replica
-revideo compare runs/<name> runs/<name>-replica
+$RV analyze replica.mp4 -o runs/<name>-replica
+$RV compare runs/<name> runs/<name>-replica
 ```
 Report the fidelity score and the components that differ; iterate on the lowest component.
 

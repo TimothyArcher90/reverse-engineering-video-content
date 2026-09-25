@@ -3,6 +3,13 @@
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+### Added
+- Self-contained skill package: `tools/build_skill.py` → `dist/reverse-engineering-video.skill`, bundling the
+  `revideo` source. The launcher `skill/scripts/revideo.py` installs numpy/opencv on first use (yt-dlp and
+  imageio-ffmpeg only when needed); `REVIDEO_NO_INSTALL=1` turns that off.
+- CI job that builds the `.skill` and uploads it as an artifact; test that the unpacked package runs on its own.
+
 ## [0.2.0] — 2026-09-24
 
 Hardened against real footage. See [`docs/VALIDATION.md`](docs/VALIDATION.md).
