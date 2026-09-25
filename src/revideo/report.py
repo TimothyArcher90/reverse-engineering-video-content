@@ -87,7 +87,11 @@ def write_measured_report(r: dict, path: str) -> None:
         for t in r["transcript"]:
             L.append(f"- `{t['start']:.2f}` {t['text']}")
     from .media_report import forensics_md
+    from .social import advice
 
+    soc = advice(r.get("social"))
+    if soc:
+        L += ["\n## Short-form (Reels / TikTok)", *[f"- {x}" for x in soc]]
     L += forensics_md(r.get("forensics"))
     with open(path, "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")
@@ -216,6 +220,14 @@ def _pacing_svg(curve: list[int], window: float = 5) -> str:
     return "".join(out)
 
 
+def _social_html(s: dict | None) -> str:
+    if not s:
+        return ""
+    from .social import advice
+
+    return "<h2>Short-form (Reels / TikTok) [M]</h2><ul>" + "".join(f"<li>{_e(x)}</li>" for x in advice(s)) + "</ul>"
+
+
 def write_html_report(r: dict, path: str) -> None:
     from .media_report import forensics_html
 
@@ -299,6 +311,7 @@ Verified film references [V] come from <code>revideo match-ref</code>. Interpret
 <h2>Shots</h2><div class="scroll"><table><thead><tr><th>#</th><th>Frame</th><th>In</th><th>Transition</th>
 <th>Camera</th><th>Size</th><th>Framing</th><th>Palette</th><th>Reference</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>
 {f'<h2>Transcript</h2><div class="scroll"><table>{tx}</table></div>' if tx else ""}
+{_social_html(r.get("social"))}
 {forensics_html(r.get("forensics"))}
 <p class="legend" style="margin-top:32px">revideo {r["tool"]["version"]} · detector {r["tool"]["detector"]["engine"]}</p>
 </main></body></html>"""

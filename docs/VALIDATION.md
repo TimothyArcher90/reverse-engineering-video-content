@@ -4,7 +4,7 @@ What has been tested, how, and what the numbers were. Anything not listed here i
 
 ## 1. Automated tests (CI, every push)
 
-34 tests on synthetic videos, photos and audio with known ground truth (`tests/`):
+36 tests on synthetic videos, photos and audio with known ground truth (`tests/`):
 
 | Area | What is asserted |
 |---|---|
@@ -30,6 +30,7 @@ What has been tested, how, and what the numbers were. Anything not listed here i
 | Plans | Every measured shot appears with its duration; measured pan reaches the shot list; all tiers present |
 | Catalog | No price figures, HTTPS links, unique names, `prices_verified: false` |
 | Photo/audio compare | Identical input ≥ 99; photo vs audio refused |
+| Short-form | 9:16 reel with top-edge text from frame 0 → first text at 0.0 s, outside both safe zones at 0.0 s; centred text found in the middle band; last frame = first → loop; blank and noise frames → no text |
 | Skill package | Built `.skill` unzipped and run with installs disabled → analysis from the bundled source |
 
 CI runs lint (ruff) and the test suite on Linux (3.10, 3.12), macOS and Windows. A daily run repeats the suite on the newest dependencies and checks every catalog link.
@@ -57,6 +58,8 @@ recording of fireworks.
 - Photos straight from real phones/cameras (EXIF layouts vary by maker; HEIC is not decoded — convert to JPG).
 - Tool fingerprints on real exports from each editor: the rules match documented strings, but each app's
   export metadata has not been sampled here.
+- Short-form text detector on real reels (stylized fonts, emoji, animated captions). Safe-zone margins
+  come from third-party summaries; the official TikTok and Meta pages were not reachable from here.
 - Catalog links: this environment's network policy blocked them; the daily workflow checks them on GitHub.
 - URL download through `yt-dlp` (network was not available in the validation environment).
 - The fidelity-score weights: they are a reasoned starting point, not calibrated against human judgement.

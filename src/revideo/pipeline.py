@@ -10,7 +10,7 @@ from collections import Counter
 import cv2
 import numpy as np
 
-from . import __version__, audio, color, composition, evidence, forensics, ingest, motion, optics
+from . import __version__, audio, color, composition, evidence, forensics, ingest, motion, optics, social
 from . import shots as shotmod
 from .video import probe, timecode
 
@@ -107,7 +107,10 @@ def analyze(
     _log("L4 forensics (container tags, XMP, tool fingerprints)", quiet)
     meta = forensics.gather(video, acq["meta"])
 
-    _log("L5 global fingerprint", quiet)
+    _log("L5 short-form layer (on-screen text, hook, safe zones, loop)", quiet)
+    social_rep = social.analyze(video, info, shot_list)
+
+    _log("L6 global fingerprint", quiet)
     fp = fingerprint(info, shot_list, per_shot, all_frames, audio_rep)
 
     result = {
@@ -121,6 +124,7 @@ def analyze(
         },
         "fingerprint": fp,
         "forensics": meta,
+        "social": social_rep,
         "shots": per_shot,
         "transcript": transcript,
         "audio": audio_rep,

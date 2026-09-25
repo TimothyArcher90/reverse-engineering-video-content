@@ -79,6 +79,19 @@ grain) before estimating a lens. A shallow `depth_of_field_guess` does not prove
 photos, describe the subject from `subject` (box and palette), not from the background-dominated
 global palette.
 
+### 3b. Short-form (Reels, TikTok, Shorts)
+For vertical social video, read `analysis.json → social` before writing the teardown:
+- **Hook (0–3 s):** cuts, the motion energy of the hook compared with the rest, and when the first
+  on-screen text appears. The hook is usually the core trick, so describe it first and frame-exact.
+- **On-screen text:** when it appears and where (top, middle or bottom band). The detector finds
+  *where* and *when* text is, not what it says; read the words from the keyframes [O].
+- **Safe zones:** boxes outside the Meta or TikTok presets would sit under the app's buttons or
+  captions. The presets come from third-party summaries and are unverified: say so, and point to the
+  platform's current template.
+- **Loop:** when the first and last frames are similar, the video replays seamlessly; keep that
+  ending in the replica.
+The plan's "Reels / TikTok delivery" section turns these into instructions.
+
 ### 4. References
 Follow `references/cinematic_reference_protocol.md`. Propose films, directors and DPs per shot or
 sequence with the visual reason [I]. Verify with the film file when the user has it:

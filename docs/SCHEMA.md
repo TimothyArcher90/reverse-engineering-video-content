@@ -58,6 +58,12 @@ audio                     {duration_sec, loudness_mean_dbfs, loudness_peak_dbfs,
                            spectral {energy_share_pct {band: %}, spectral_centroid_hz, brightness_guess,
                                      crest_factor_db}} | {error}
 forensics                 see "forensics" below
+social                    {format {aspect_ratio, is_9_16, resolution, full_hd_vertical},
+                           on_screen_text {first_text_sec, text_in_first_second, frames_with_text_share,
+                                           position_bands {top, middle, bottom}, timeline [{t, boxes}], note},
+                           hook {cuts_in_first_3s, motion_energy_first_3s, motion_energy_rest, hook_vs_rest_energy},
+                           safe_zones {preset: {label, text_boxes, outside_safe_zone, applies, first_violation_sec}},
+                           safe_zone_presets_verified (false), loop {first_last_similarity, loop_guess}, samples}
 artifacts                 {keyframes_dir, contact_sheet}
 evidence_legend           which fields carry which evidence level
 ```

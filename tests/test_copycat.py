@@ -195,3 +195,55 @@ def test_photo_subject_palette_and_still_prompt(photo, tmp_path):
 def test_fingerprint_evidence_names_the_field(photo):
     hit = next(h for h in forensics.gather(photo)["tool_fingerprints"] if h["tool"] == "Adobe Lightroom")
     assert hit["evidence"].startswith("xmp.CreatorTool: Adobe Lightroom")
+
+
+def _reel(path, frames_spec, fps=24, size=(540, 960)):
+    """frames_spec: list of (n_frames, text or None, y_frac, seed) segments."""
+    w, h = size
+    vw = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
+    first = None
+    for n, text, y, seed in frames_spec:
+        rng = np.random.default_rng(seed)
+        bg = cv2.GaussianBlur(
+            cv2.resize((rng.random((h // 40, w // 40, 3)) * 255).astype(np.uint8), (w, h), interpolation=cv2.INTER_CUBIC),
+            (0, 0),
+            6,
+        )
+        for _ in range(n):
+            f = bg.copy()
+            if text:
+                for c, t in (((0, 0, 0), 8), ((255, 255, 255), 3)):
+                    cv2.putText(f, text, (45, int(y * h)), cv2.FONT_HERSHEY_DUPLEX, 1.3, c, t, cv2.LINE_AA)
+            first = f if first is None else first
+            vw.write(f)
+    vw.write(first)  # last frame = first frame → seamless loop
+    vw.release()
+    return str(path)
+
+
+def test_short_form_hook_text_safe_zone_and_loop(tmp_path):
+    """9:16 reel: text at the very top from frame 0 (outside both safe zones), then centred text, ends on frame 0."""
+    from revideo import social
+
+    video = _reel(tmp_path / "reel.mp4", [(48, "WAIT FOR IT", 0.05, 1), (48, "3 tricks", 0.5, 2), (24, None, 0, 3)])
+    out = tmp_path / "r"
+    assert cli.main(["analyze", video, "-o", str(out), "--quiet", "--no-audio", "--no-motion"]) == 0
+    s = json.loads((out / "analysis.json").read_text())["social"]
+    assert s["format"]["is_9_16"] and not s["format"]["full_hd_vertical"]
+    assert s["on_screen_text"]["first_text_sec"] == 0.0 and s["on_screen_text"]["text_in_first_second"]
+    for p in s["safe_zones"].values():
+        assert p["outside_safe_zone"] >= 1 and p["first_violation_sec"] == 0.0
+    assert s["on_screen_text"]["position_bands"]["top"] >= 1 and s["on_screen_text"]["position_bands"]["middle"] >= 1
+    assert s["hook"]["cuts_in_first_3s"] >= 1
+    assert s["loop"]["loop_guess"] == "seamless loop likely"
+    plan = (out / "replication_plan.md").read_text()
+    assert "Reels / TikTok delivery" in plan and "safe zone" in plan
+    assert social.load_presets()["verified"] is False  # never present third-party margins as official
+
+
+def test_text_detector_ignores_textureless_and_noisy_frames():
+    from revideo.social import text_regions
+
+    rng = np.random.default_rng(5)
+    assert text_regions(np.full((960, 540, 3), 90, np.uint8)) == []
+    assert text_regions(cv2.GaussianBlur((rng.random((960, 540, 3)) * 255).astype(np.uint8), (0, 0), 1.5)) == []
