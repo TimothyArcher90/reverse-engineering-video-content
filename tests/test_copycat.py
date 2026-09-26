@@ -195,3 +195,33 @@ def test_photo_subject_palette_and_still_prompt(photo, tmp_path):
 def test_fingerprint_evidence_names_the_field(photo):
     hit = next(h for h in forensics.gather(photo)["tool_fingerprints"] if h["tool"] == "Adobe Lightroom")
     assert hit["evidence"].startswith("xmp.CreatorTool: Adobe Lightroom")
+
+
+def test_preprod_pack_matches_measured_shots(edit_video, tmp_path):
+    import csv
+
+    out = tmp_path / "pp"
+    assert cli.main(["analyze", edit_video, "-o", str(out), "--quiet", "--no-audio"]) == 0
+    r = json.loads((out / "analysis.json").read_text())
+    with open(out / "shotlist.csv", encoding="utf-8-sig") as f:
+        rows = list(csv.DictReader(f))
+    assert [int(x["shot"]) for x in rows] == [s["index"] for s in r["shots"]]
+    for x, s in zip(rows, r["shots"], strict=True):
+        assert float(x["duration_sec"]) == s["duration_sec"] and x["in_tc"] == s["start_tc"]
+        assert float(x["record_at_least_sec"]) > s["duration_sec"]
+    pan = next(x for x in rows if "pan_right" in x["move"])
+    assert all(x["setup"] != pan["setup"] for x in rows if "pan" not in x["move"])  # a gimbal move never shares a static setup
+    board = (out / "storyboard.html").read_text()
+    for s in r["shots"]:
+        assert s["keyframes"]["mid"] in board and (out / s["keyframes"]["mid"]).is_file()
+    sheet = (out / "callsheet.md").read_text()
+    assert sheet.count("| ____ |") >= 5  # people, dates and places are never invented
+    assert "Setup A" in sheet and "pan rig" in sheet and "pan_right" in (out / "shotlist.csv").read_text()
+
+
+def test_preprod_refuses_stills(photo, tmp_path):
+    out = tmp_path / "ps"
+    cli.main(["analyze", photo, "-o", str(out), "--quiet"])
+    assert not (out / "shotlist.csv").exists()
+    with pytest.raises(SystemExit):
+        cli.main(["preprod", str(out)])

@@ -3,6 +3,17 @@
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Pre-production pack** (`preprod.py`, `revideo preprod <dir>`, written automatically for every video
+  analysis): `shotlist.csv` (one row per measured shot: timecodes, duration, minimum roll time with
+  1 s handles, move, size, depth of field, palette, look, rig per tier, keyframe, AI prompt),
+  `storyboard.html` (printable board from the measured keyframes) and `callsheet.md` (shooting order
+  grouped by setup — same rig and look — with blanks for date, place, cast and crew, which are never
+  invented). Tests check every row against the measured shots and that a moving shot never shares a
+  static setup.
+
 ## [0.3.0] — 2026-09-25
 
 The master-copycat release: photos and sound as well as video, everything the file says about how it

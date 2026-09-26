@@ -40,6 +40,7 @@ el plano 0 se verifica en el fotograma 92 (00:00:03:20). Imagen: © Blender Foun
  L5  huella ─────── ASL, cortes/min, curva de ritmo, gancho 0–3 s, look global
      │                         ▲ todo lo anterior es MEDIDO → analysis.json, report.html/.md
  PLAN ───────────── replication_plan.md: EDL, rig por presupuesto, receta de color, óptica, prompts
+ PREPRO ─────────── shotlist.csv · storyboard.html · callsheet.md (video): rodar por setups, no por orden de edición
  L6  agente ─────── skill/SKILL.md: observa, reúne evidencia, propone referencias, adapta el plan
  REF match-ref ──── fotograma exacto en la película → [V]
  QA  compare ────── réplica vs original → 0–100 (video, foto o audio)
@@ -75,7 +76,7 @@ dependen de que el entorno de código tenga salida a internet; si no, sube el ar
 revideo analyze "https://www.instagram.com/reel/..." -o runs/mi-reel
 revideo analyze foto.jpg -o runs/foto          # EXIF, Lightroom, óptica, color
 revideo analyze cancion.mp3 -o runs/cancion    # BPM, tonalidad, espectro
-#    → analysis.json · report.html · report.md · replication_plan.md (+ dossier, keyframes en video)
+#    → analysis.json · report.html · report.md · replication_plan.md (+ dossier, keyframes, shotlist.csv, storyboard.html y callsheet.md en video)
 
 # 2. Verificar una referencia (necesitas el archivo de la película, legalmente)
 revideo index-ref pelicula.mkv -o refs/pelicula --title "Título" --director "Dir." --dp "DoP" --year 1999
@@ -88,6 +89,7 @@ revideo compare runs/mi-reel runs/mi-reel-replica      # fidelidad 0–100 por c
 
 revideo report runs/mi-reel                            # regenerar informes
 revideo plan runs/mi-reel                              # regenerar el plan de réplica
+revideo preprod runs/mi-reel                           # regenerar shot list, storyboard y call sheet
 revideo tools                                          # catálogo de herramientas por presupuesto
 ```
 
@@ -98,13 +100,14 @@ revideo tools                                          # catálogo de herramient
 | `match-ref` | Fotograma exacto por plano; se fusiona en `analysis.json` e informes |
 | `compare` | Fidelidad 0–100 de una réplica. Video: ritmo 30 %, color 30 %, encuadre 15 %, cámara 15 %, sonido 10 % · foto: color, encuadre, óptica · audio: tempo, tonalidad, espectro, dinámica |
 | `plan` | Plan de réplica por presupuesto y condiciones |
+| `preprod` | Preproducción de cine: `shotlist.csv` (Excel/Sheets), `storyboard.html` imprimible, `callsheet.md` agrupado por setup |
 | `tools` | Catálogo de herramientas (modelo de precio y enlace oficial; precios **no** verificados) |
 | `report` | Regenera `report.md` y `report.html` |
 | `doctor` | Comprueba dependencias |
 
 ## Validación
 
-34 tests con verdad conocida en CI (Linux, macOS, Windows) + pruebas con metraje real
+36 tests con verdad conocida en CI (Linux, macOS, Windows) + pruebas con metraje real
 ([detalle](docs/VALIDATION.md)):
 
 | Prueba real | Resultado |
