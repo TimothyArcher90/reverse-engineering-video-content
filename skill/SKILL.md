@@ -43,9 +43,10 @@ $RV analyze "<file-or-url>" -o runs/<name>     # video, photo (.jpg/.png/.webpâ€
   continue with what you can see, tagging the missing measurements [?].
 - Outputs: `analysis.json` (schema: `docs/SCHEMA.md` in the repo), `report.html`, `report.md` and
   `replication_plan.md` for every input. Videos also get `dossier.md` (template),
-  `contact_sheet.jpg`, `keyframes/`, and `audio.wav`.
+  `contact_sheet.jpg`, `keyframes/`, `audio.wav` and a pre-production pack: `shotlist.csv`,
+  `storyboard.html` and `callsheet.md` (shots grouped by setup for the shoot day).
 - Other commands: `index-ref`/`match-ref` (exact film frame), `compare` (replica score),
-  `plan` (rewrite the plan), `tools` (catalog), `report`, `doctor`.
+  `plan` (rewrite the plan), `preprod` (rewrite the pre-production pack), `tools` (catalog), `report`, `doctor`.
 - Useful video flags: `--threshold 0.2` gives more cuts and `0.45` fewer. `--engine scenedetect`
   uses a different cut detector, and `--whisper small` transcribes when there are no subtitles.
   Say which setting you used.
@@ -106,6 +107,8 @@ optics, tools per tier and an AI prompt per shot. Then:
   fps, lens class, Lightroom values.
 - For the edit, list shots in order with durations (the EDL), and cut on the beat when
   `cuts_on_beat_ratio` is high.
+- For a live-action shoot, hand over `shotlist.csv`, `storyboard.html` and `callsheet.md`: fill the
+  call sheet's blanks only with what the user told you; never invent dates, places or names.
 Use `references/replication_template.md` for the structure. It has a section for each kind:
 video, photo and audio.
 

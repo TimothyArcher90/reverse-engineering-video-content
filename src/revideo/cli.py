@@ -60,6 +60,9 @@ def main(argv=None) -> int:
     pl = sub.add_parser("plan", help="(re)write replication_plan.md: per-shot specs, grade recipe, gear and tools per budget")
     pl.add_argument("analysis_dir")
 
+    pp = sub.add_parser("preprod", help="shot list CSV, printable storyboard and call-sheet draft from a video analysis")
+    pp.add_argument("analysis_dir")
+
     sub.add_parser("tools", help="list the tool catalog used by replication plans")
     sub.add_parser("doctor", help="check dependencies")
 
@@ -97,12 +100,25 @@ def main(argv=None) -> int:
         plan_path = write_plan(out)
         if not args.quiet:
             print(f"▸ replication plan → {plan_path}")
+        if kind == "video":
+            from .preprod import write_preprod
+
+            pre = write_preprod(out)
+            if not args.quiet:
+                print(f"▸ pre-production pack → {', '.join(os.path.basename(v) for v in pre.values())}")
         return 0
 
     if args.cmd == "plan":
         from .advise import write_plan
 
         print(f"replication plan → {write_plan(args.analysis_dir)}")
+        return 0
+
+    if args.cmd == "preprod":
+        from .preprod import write_preprod
+
+        for k, v in write_preprod(args.analysis_dir).items():
+            print(f"{k} → {v}")
         return 0
 
     if args.cmd == "tools":
