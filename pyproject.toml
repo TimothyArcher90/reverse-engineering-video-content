@@ -18,7 +18,7 @@ full = [
     "imageio-ffmpeg>=0.4",
 ]
 whisper = ["faster-whisper>=1.0"]
-dev = ["pytest>=7.4"]
+dev = ["pytest>=7.4", "otio-cmx3600-adapter"]  # third-party EDL reader used to validate edit.edl
 
 [project.scripts]
 revideo = "revideo.cli:main"

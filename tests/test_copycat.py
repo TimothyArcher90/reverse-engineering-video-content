@@ -195,3 +195,45 @@ def test_photo_subject_palette_and_still_prompt(photo, tmp_path):
 def test_fingerprint_evidence_names_the_field(photo):
     hit = next(h for h in forensics.gather(photo)["tool_fingerprints"] if h["tool"] == "Adobe Lightroom")
     assert hit["evidence"].startswith("xmp.CreatorTool: Adobe Lightroom")
+
+
+def test_edl_reproduces_measured_cuts_frame_accurately(edit_video, tmp_path):
+    from revideo import edl
+
+    out = tmp_path / "e"
+    assert cli.main(["analyze", edit_video, "-o", str(out), "--quiet", "--no-audio"]) == 0
+    r = json.loads((out / "analysis.json").read_text())
+    raw = (out / "edit.edl").read_bytes()
+    assert b"\r\n" in raw and raw.isascii()  # CMX 3600 readers expect plain ASCII
+    events = edl.parse_events(raw.decode())
+    assert len(events) == len(r["shots"])
+    fps = round(r["source"]["video"]["fps"])
+
+    def frames(tc):
+        h, m, s, f = map(int, tc.split(":"))
+        return ((h * 60 + m) * 60 + s) * fps + f
+
+    for (src_in, src_out, rec_in, rec_out), s in zip(events, r["shots"], strict=True):
+        assert frames(rec_in) == s["start_frame"] and frames(rec_out) == s["end_frame"]
+        assert frames(src_out) - frames(src_in) == s["end_frame"] - s["start_frame"]
+    assert frames(events[-1][3]) == r["shots"][-1]["end_frame"]  # no gaps: record side ends at the last frame
+
+
+def test_edl_refuses_stills(photo, tmp_path):
+    out = tmp_path / "es"
+    cli.main(["analyze", photo, "-o", str(out), "--quiet"])
+    assert not (out / "edit.edl").exists()
+    with pytest.raises(SystemExit):
+        cli.main(["edl", str(out)])
+
+
+def test_edl_reads_back_in_opentimelineio(edit_video, tmp_path):
+    """An independent CMX 3600 reader (OpenTimelineIO) sees the same four shots: 24, 36, 48, 24 frames."""
+    otio = pytest.importorskip("opentimelineio")
+    out = tmp_path / "eo"
+    cli.main(["analyze", edit_video, "-o", str(out), "--quiet", "--no-audio"])
+    try:
+        tl = otio.adapters.read_from_file(str(out / "edit.edl"), adapter_name="cmx_3600", rate=24)
+    except otio.exceptions.NotSupportedError:
+        pytest.skip("cmx_3600 adapter not installed")
+    assert [c.range_in_parent().duration.to_frames() for c in tl.tracks[0]] == [24, 36, 48, 24]
