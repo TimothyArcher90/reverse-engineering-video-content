@@ -75,7 +75,7 @@ dependen de que el entorno de código tenga salida a internet; si no, sube el ar
 revideo analyze "https://www.instagram.com/reel/..." -o runs/mi-reel
 revideo analyze foto.jpg -o runs/foto          # EXIF, Lightroom, óptica, color
 revideo analyze cancion.mp3 -o runs/cancion    # BPM, tonalidad, espectro
-#    → analysis.json · report.html · report.md · replication_plan.md (+ dossier, keyframes en video)
+#    → analysis.json · report.html · report.md · replication_plan.md (+ dossier, keyframes y `edit.edl` en video)
 
 # 2. Verificar una referencia (necesitas el archivo de la película, legalmente)
 revideo index-ref pelicula.mkv -o refs/pelicula --title "Título" --director "Dir." --dp "DoP" --year 1999
@@ -88,6 +88,7 @@ revideo compare runs/mi-reel runs/mi-reel-replica      # fidelidad 0–100 por c
 
 revideo report runs/mi-reel                            # regenerar informes
 revideo plan runs/mi-reel                              # regenerar el plan de réplica
+revideo edl runs/mi-reel                               # lista de edición CMX 3600 (Resolve / Premiere)
 revideo tools                                          # catálogo de herramientas por presupuesto
 ```
 
@@ -98,13 +99,14 @@ revideo tools                                          # catálogo de herramient
 | `match-ref` | Fotograma exacto por plano; se fusiona en `analysis.json` e informes |
 | `compare` | Fidelidad 0–100 de una réplica. Video: ritmo 30 %, color 30 %, encuadre 15 %, cámara 15 %, sonido 10 % · foto: color, encuadre, óptica · audio: tempo, tonalidad, espectro, dinámica |
 | `plan` | Plan de réplica por presupuesto y condiciones |
+| `edl` | `edit.edl` (CMX 3600): los cortes medidos, al fotograma, listos para importar en DaVinci Resolve o Premiere Pro y re-enlazar con tus tomas |
 | `tools` | Catálogo de herramientas (modelo de precio y enlace oficial; precios **no** verificados) |
 | `report` | Regenera `report.md` y `report.html` |
 | `doctor` | Comprueba dependencias |
 
 ## Validación
 
-34 tests con verdad conocida en CI (Linux, macOS, Windows) + pruebas con metraje real
+37 tests con verdad conocida en CI (Linux, macOS, Windows) + pruebas con metraje real
 ([detalle](docs/VALIDATION.md)):
 
 | Prueba real | Resultado |

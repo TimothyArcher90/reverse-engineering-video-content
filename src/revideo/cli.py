@@ -60,6 +60,9 @@ def main(argv=None) -> int:
     pl = sub.add_parser("plan", help="(re)write replication_plan.md: per-shot specs, grade recipe, gear and tools per budget")
     pl.add_argument("analysis_dir")
 
+    ed = sub.add_parser("edl", help="CMX 3600 edit list of the measured cuts (import into Resolve / Premiere)")
+    ed.add_argument("analysis_dir")
+
     sub.add_parser("tools", help="list the tool catalog used by replication plans")
     sub.add_parser("doctor", help="check dependencies")
 
@@ -97,12 +100,24 @@ def main(argv=None) -> int:
         plan_path = write_plan(out)
         if not args.quiet:
             print(f"▸ replication plan → {plan_path}")
+        if kind == "video":
+            from .edl import write_edl
+
+            edl_path = write_edl(out)
+            if not args.quiet:
+                print(f"▸ edit decision list → {edl_path}")
         return 0
 
     if args.cmd == "plan":
         from .advise import write_plan
 
         print(f"replication plan → {write_plan(args.analysis_dir)}")
+        return 0
+
+    if args.cmd == "edl":
+        from .edl import write_edl
+
+        print(f"edit decision list → {write_edl(args.analysis_dir)}")
         return 0
 
     if args.cmd == "tools":

@@ -43,9 +43,10 @@ $RV analyze "<file-or-url>" -o runs/<name>     # video, photo (.jpg/.png/.webpâ€
   continue with what you can see, tagging the missing measurements [?].
 - Outputs: `analysis.json` (schema: `docs/SCHEMA.md` in the repo), `report.html`, `report.md` and
   `replication_plan.md` for every input. Videos also get `dossier.md` (template),
-  `contact_sheet.jpg`, `keyframes/`, and `audio.wav`.
+  `contact_sheet.jpg`, `keyframes/`, `audio.wav` and `edit.edl` (the measured cuts as a CMX 3600
+  list that DaVinci Resolve and Premiere Pro import).
 - Other commands: `index-ref`/`match-ref` (exact film frame), `compare` (replica score),
-  `plan` (rewrite the plan), `tools` (catalog), `report`, `doctor`.
+  `plan` (rewrite the plan), `edl` (rewrite the edit list), `tools` (catalog), `report`, `doctor`.
 - Useful video flags: `--threshold 0.2` gives more cuts and `0.45` fewer. `--engine scenedetect`
   uses a different cut detector, and `--whisper small` transcribes when there are no subtitles.
   Say which setting you used.
@@ -104,7 +105,8 @@ optics, tools per tier and an AI prompt per shot. Then:
   (phone / creator / pro) plus the AI path.
 - Give exact numbers where measured: durations, hex colors, BPM (beat interval), aspect ratio,
   fps, lens class, Lightroom values.
-- For the edit, list shots in order with durations (the EDL), and cut on the beat when
+- For the edit, list shots in order with durations and hand over `edit.edl`: importing it gives the
+  exact original timing, and each SHOTnnn event is relinked to the new take. Cut on the beat when
   `cuts_on_beat_ratio` is high.
 Use `references/replication_template.md` for the structure. It has a section for each kind:
 video, photo and audio.

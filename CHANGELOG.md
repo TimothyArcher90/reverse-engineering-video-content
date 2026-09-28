@@ -3,6 +3,15 @@
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Edit decision list** (`edl.py`, `revideo edl <dir>`, written automatically for every video
+  analysis): `edit.edl` in CMX 3600 with one event per measured shot, a placeholder reel per shot
+  (SHOT001…) to relink to new takes, the original record timecodes frame-accurately, and beat
+  positions as comments. Tests check every event against the measured cut frames and read the file
+  back with OpenTimelineIO's independent CMX 3600 adapter.
+
 ## [0.3.0] — 2026-09-25
 
 The master-copycat release: photos and sound as well as video, everything the file says about how it
