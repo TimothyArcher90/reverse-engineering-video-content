@@ -195,3 +195,41 @@ def test_photo_subject_palette_and_still_prompt(photo, tmp_path):
 def test_fingerprint_evidence_names_the_field(photo):
     hit = next(h for h in forensics.gather(photo)["tool_fingerprints"] if h["tool"] == "Adobe Lightroom")
     assert hit["evidence"].startswith("xmp.CreatorTool: Adobe Lightroom")
+
+
+def _shots(durs):
+    out, t = [], 0.0
+    for i, d in enumerate(durs):
+        out.append({"index": i, "start_sec": round(t, 3), "end_sec": round(t + d, 3), "duration_sec": d})
+        t += d
+    return {"kind": "video", "shots": out}
+
+
+def test_structure_finds_hook_body_payoff_on_known_edit():
+    from revideo import structure
+
+    # 2.0 s hook shot, body slow then fast (4×1.0 s, 8×0.25 s), then a 4.0 s final hold
+    st = structure.analyze(_shots([2.0] + [1.0] * 4 + [0.25] * 8 + [4.0]))
+    hook, body, payoff = st["parts"]
+    assert hook["end_sec"] == 2.0  # the first cut between 1.5 and 3.5 s closes the hook
+    assert payoff["start_sec"] == 8.0 and payoff["shots"] == [13]  # the final hold is the payoff
+    assert body["start_sec"] == 2.0 and body["end_sec"] == 8.0
+    assert st["body_pacing"] == "accelerating"
+    assert st["longest_shot"]["index"] == 13
+    assert sum(p["duration_sec"] for p in st["parts"]) == st["duration_sec"] == 12.0
+
+
+def test_structure_without_early_cut_uses_default_hook():
+    from revideo import structure
+
+    st = structure.analyze(_shots([5.0, 1.0, 1.0, 1.0, 1.0, 1.0]))
+    assert st["parts"][0]["end_sec"] == 3.0 and st["parts"][0]["cuts"] == 0
+    assert st["body_pacing"] == "accelerating"  # no cuts in the first half of the body, five in the second
+
+
+def test_structure_reaches_the_plan(edit_video, tmp_path):
+    out = tmp_path / "st"
+    cli.main(["analyze", edit_video, "-o", str(out), "--quiet", "--no-audio"])
+    r = json.loads((out / "analysis.json").read_text())
+    assert [p["part"] for p in r["structure"]["parts"]] == ["hook", "body", "payoff"]
+    assert "## 2b. Structure: hook → body → payoff" in (out / "replication_plan.md").read_text()

@@ -208,6 +208,10 @@ def plan(r: dict) -> str:
             L.append(
                 f"| {s['index']} | {s['start_tc']} | {s['duration_sec']} | {cam} | {rig[0]} / {rig[1]} / {rig[2]} | {size or '–'} | see §6 #{s['index']} |"
             )
+        if r.get("structure"):
+            from .structure import plan_lines
+
+            L += ["", "## 2b. Structure: hook → body → payoff", "", *plan_lines(r["structure"])]
         L += ["", "## 3. Grade recipe", *[f"- {x}" for x in _grade_steps(g, crs)]]
         mids = [s.get("optics") for s in r["shots"] if s.get("optics")]
         if mids:
