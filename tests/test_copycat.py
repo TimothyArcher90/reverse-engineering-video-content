@@ -230,6 +230,6 @@ def test_structure_without_early_cut_uses_default_hook():
 def test_structure_reaches_the_plan(edit_video, tmp_path):
     out = tmp_path / "st"
     cli.main(["analyze", edit_video, "-o", str(out), "--quiet", "--no-audio"])
-    r = json.loads((out / "analysis.json").read_text())
+    r = json.loads((out / "analysis.json").read_text(encoding="utf-8"))
     assert [p["part"] for p in r["structure"]["parts"]] == ["hook", "body", "payoff"]
-    assert "## 2b. Structure: hook → body → payoff" in (out / "replication_plan.md").read_text()
+    assert "## 2b. Structure: hook → body → payoff" in (out / "replication_plan.md").read_text(encoding="utf-8")
