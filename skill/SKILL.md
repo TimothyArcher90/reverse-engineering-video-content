@@ -106,6 +106,8 @@ optics, tools per tier and an AI prompt per shot. Then:
   fps, lens class, Lightroom values.
 - For the edit, list shots in order with durations (the EDL), and cut on the beat when
   `cuts_on_beat_ratio` is high.
+- For Reels/TikTok, rebuild the same shape from `structure` (plan §2b): the hook's length and cut
+  count, whether the body speeds up, and where the payoff lands. Its boundaries are heuristics [I].
 Use `references/replication_template.md` for the structure. It has a section for each kind:
 video, photo and audio.
 

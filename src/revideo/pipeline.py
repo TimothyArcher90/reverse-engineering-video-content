@@ -131,6 +131,10 @@ def analyze(
             f"{evidence.OBSERVED}/{evidence.INFERRED}": "written by the agent in dossier.md and shots[*].interpretation",
         },
     }
+    if per_shot:
+        from . import structure
+
+        result["structure"] = structure.analyze(result)
     result["tool"]["elapsed_sec"] = round(time.time() - t0, 1)
     with open(os.path.join(out_dir, "analysis.json"), "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)

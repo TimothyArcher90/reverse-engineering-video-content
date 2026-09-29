@@ -3,6 +3,15 @@
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Reel structure** (`structure.py`, `analysis.json → structure`, plan section 2b): splits every video
+  into hook → body → payoff from the measured cuts, with duration, shots and cuts per second per part,
+  whether the body accelerates or slows down, and the longest hold. The boundary rules are written
+  into the output and tagged [I]. Tests check the split on known edits (hook closed by the first cut
+  between 1.5 and 3.5 s, payoff on the final hold, accelerating body).
+
 ## [0.3.0] — 2026-09-25
 
 The master-copycat release: photos and sound as well as video, everything the file says about how it

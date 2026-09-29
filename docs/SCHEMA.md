@@ -58,6 +58,10 @@ audio                     {duration_sec, loudness_mean_dbfs, loudness_peak_dbfs,
                            spectral {energy_share_pct {band: %}, spectral_centroid_hz, brightness_guess,
                                      crest_factor_db}} | {error}
 forensics                 see "forensics" below
+structure                 {duration_sec, parts[] {part: hook|body|payoff, start_sec, end_sec, duration_sec,
+                           shots[], cuts, cuts_per_sec}, body_pacing, body_cut_rate_first_second_half[],
+                           median_shot_sec, longest_shot {index, start_sec, duration_sec}, rules[]}
+                           (additive; boundaries are heuristics [I], cut times [M])
 artifacts                 {keyframes_dir, contact_sheet}
 evidence_legend           which fields carry which evidence level
 ```
