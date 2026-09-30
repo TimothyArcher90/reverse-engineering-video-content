@@ -106,6 +106,8 @@ optics, tools per tier and an AI prompt per shot. Then:
   fps, lens class, Lightroom values.
 - For the edit, list shots in order with durations (the EDL), and cut on the beat when
   `cuts_on_beat_ratio` is high.
+- To turn horizontal footage into a Reel/TikTok, use plan §2c and `reframe.csv`: one 9:16 crop per
+  shot with its ffmpeg filter. Check shots where the subject moves; the crop is fixed per shot [I].
 Use `references/replication_template.md` for the structure. It has a section for each kind:
 video, photo and audio.
 

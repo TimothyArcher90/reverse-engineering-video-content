@@ -208,6 +208,10 @@ def plan(r: dict) -> str:
             L.append(
                 f"| {s['index']} | {s['start_tc']} | {s['duration_sec']} | {cam} | {rig[0]} / {rig[1]} / {rig[2]} | {size or '–'} | see §6 #{s['index']} |"
             )
+        from .reframe import plan as reframe_plan
+        from .reframe import plan_lines as reframe_lines
+
+        L += ["", "## 2c. Vertical reframe (9:16)", *reframe_lines(reframe_plan(r))]
         L += ["", "## 3. Grade recipe", *[f"- {x}" for x in _grade_steps(g, crs)]]
         mids = [s.get("optics") for s in r["shots"] if s.get("optics")]
         if mids:

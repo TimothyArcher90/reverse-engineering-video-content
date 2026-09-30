@@ -4,7 +4,7 @@ What has been tested, how, and what the numbers were. Anything not listed here i
 
 ## 1. Automated tests (CI, every push)
 
-34 tests on synthetic videos, photos and audio with known ground truth (`tests/`):
+36 tests on synthetic videos, photos and audio with known ground truth (`tests/`):
 
 | Area | What is asserted |
 |---|---|
@@ -18,6 +18,7 @@ What has been tested, how, and what the numbers were. Anything not listed here i
 | Sound | 120 BPM click track → tempo within ±3 BPM (or half-time), cuts on onsets ≥ 90 % |
 | Subtitles | VTT parsing, tag stripping, rolling auto-caption de-duplication |
 | Film-frame match | Center 9:16 crop → exact frame ±1; **left-aligned 4:5 crop + mirrored + re-graded** → exact frame ±1; unrelated shot → no match and **no timecode emitted** |
+| Vertical reframe | 16:9 edit, subject at x ≈ 0.80 then ≈ 0.20 → measured within 0.03, 202×360 crop (9:16 of the height) contains the subject and stays inside the frame; vertical sources need no reframe |
 | Fidelity | Identity = 100; different videos < 80 |
 | CLI | `analyze`, `compare`, `report` end to end; HTML report references keyframes and contains the chart |
 | Photo forensics | JPEG with EXIF + Lightroom XMP → camera model and every Camera Raw slider recovered 1:1; plan copies them verbatim |
