@@ -3,6 +3,15 @@
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Vertical reframe plan** (`reframe.py`, plan section 2c, `reframe.csv`): for 16:9 or wider videos, one
+  9:16 crop window per shot centered on the largest face, or on the visual-weight center when there
+  is none, with a ready ffmpeg filter (`crop=…,scale=1080:1920`). Vertical sources are skipped. Tests
+  use a 16:9 edit whose subject moves from the right third to the left: the measured position is
+  within 3 % of the truth and the crop keeps the subject in frame.
+
 ## [0.3.0] — 2026-09-25
 
 The master-copycat release: photos and sound as well as video, everything the file says about how it

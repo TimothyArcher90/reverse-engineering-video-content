@@ -195,3 +195,40 @@ def test_photo_subject_palette_and_still_prompt(photo, tmp_path):
 def test_fingerprint_evidence_names_the_field(photo):
     hit = next(h for h in forensics.gather(photo)["tool_fingerprints"] if h["tool"] == "Adobe Lightroom")
     assert hit["evidence"].startswith("xmp.CreatorTool: Adobe Lightroom")
+
+
+def test_reframe_follows_the_subject_in_16x9(tmp_path):
+    """A 16:9 edit: textured subject on the right third, then on the left → 9:16 crops follow it."""
+    from conftest import _texture, write
+
+    from revideo import reframe
+
+    h, w = 360, 640
+    frames = []
+    for x0, bg in ((440, (40, 120, 230)), (60, (200, 150, 40))):  # subject centers ≈ 0.80 and ≈ 0.20 of the width
+        tex = _texture(140, 140, x0)
+        for _ in range(36):
+            f = np.full((h, w, 3), bg, np.uint8)
+            f[110:250, x0 : x0 + 140] = tex
+            frames.append(f)
+    src = write(str(tmp_path / "wide.mp4"), frames)
+    out = tmp_path / "rf"
+    assert cli.main(["analyze", src, "-o", str(out), "--quiet", "--no-audio"]) == 0
+    r = json.loads((out / "analysis.json").read_text(encoding="utf-8"))
+    rp = reframe.plan(r)
+    assert rp["needed"] and len(rp["shots"]) == 2
+    for row, subject_cx in zip(rp["shots"], (510, 130), strict=True):
+        assert row["crop_w"] == 202 and row["crop_h"] == 360  # 9:16 of the full 360 px height
+        assert abs(row["subject_x_norm"] - subject_cx / w) < 0.03  # measured subject position
+        assert row["crop_x"] <= subject_cx <= row["crop_x"] + row["crop_w"]  # the subject stays in frame
+        assert row["crop_x"] >= 0 and row["crop_x"] + row["crop_w"] <= w
+    assert (out / "reframe.csv").is_file()
+    assert "## 2c. Vertical reframe (9:16)" in (out / "replication_plan.md").read_text(encoding="utf-8")
+
+
+def test_reframe_skips_vertical_sources(edit_video, tmp_path):
+    from revideo import reframe
+
+    r = {"kind": "video", "source": {"video": {"width": 720, "height": 1280}}, "shots": []}
+    assert reframe.plan(r)["needed"] is False
+    assert "already vertical" in reframe.plan_lines(reframe.plan(r))[0]

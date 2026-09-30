@@ -97,6 +97,12 @@ def main(argv=None) -> int:
         plan_path = write_plan(out)
         if not args.quiet:
             print(f"▸ replication plan → {plan_path}")
+        if kind == "video":
+            from .reframe import write_reframe
+
+            rf = write_reframe(out)
+            if rf and not args.quiet:
+                print(f"▸ vertical reframe → {rf}")
         return 0
 
     if args.cmd == "plan":
