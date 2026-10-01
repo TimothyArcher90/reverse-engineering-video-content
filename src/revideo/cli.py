@@ -97,6 +97,12 @@ def main(argv=None) -> int:
         plan_path = write_plan(out)
         if not args.quiet:
             print(f"▸ replication plan → {plan_path}")
+        if kind == "video":
+            from .captions import write_captions
+
+            caps = write_captions(out)
+            if caps and not args.quiet:
+                print(f"▸ kinetic captions → {', '.join(os.path.basename(c) for c in caps)}")
         return 0
 
     if args.cmd == "plan":

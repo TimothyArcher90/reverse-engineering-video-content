@@ -106,6 +106,8 @@ optics, tools per tier and an AI prompt per shot. Then:
   fps, lens class, Lightroom values.
 - For the edit, list shots in order with durations (the EDL), and cut on the beat when
   `cuts_on_beat_ratio` is high.
+- For word-by-word captions, analyze with `--whisper small` (or a link with subtitles): you get
+  `captions_words.srt` and `captions_3words.srt`, timed to the voice. Word timing is approximate [I].
 Use `references/replication_template.md` for the structure. It has a section for each kind:
 video, photo and audio.
 
