@@ -3,6 +3,14 @@
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Kinetic captions** (`captions.py`, `captions_words.srt`, `captions_3words.srt`): when a video has a
+  transcript (subtitles or `--whisper`), each word gets its own cue. Inside a segment the time is
+  split by word length and each start snaps to the nearest measured audio onset within 80 ms. Tests
+  check the snap, the ordering, the SRT timecodes and that nothing is written without a transcript.
+
 ## [0.3.0] — 2026-09-25
 
 The master-copycat release: photos and sound as well as video, everything the file says about how it

@@ -195,3 +195,33 @@ def test_photo_subject_palette_and_still_prompt(photo, tmp_path):
 def test_fingerprint_evidence_names_the_field(photo):
     hit = next(h for h in forensics.gather(photo)["tool_fingerprints"] if h["tool"] == "Adobe Lightroom")
     assert hit["evidence"].startswith("xmp.CreatorTool: Adobe Lightroom")
+
+
+def test_kinetic_captions_snap_words_to_onsets(tmp_path):
+    from revideo import captions
+
+    seg = [{"start": 0.0, "end": 2.0, "text": "one two three four"}]
+    # length-weighted guesses are 0.0, 0.4, 0.8, 1.467 s; the measured onsets sit within 80 ms of them
+    ws = captions.words(seg, onsets=[0.03, 0.45, 0.86, 1.52, 3.0])
+    assert [w["word"] for w in ws] == ["one", "two", "three", "four"]
+    assert [w["start"] for w in ws] == [0.03, 0.45, 0.86, 1.52]  # snapped to the measured onsets
+    assert ws[-1]["end"] == 2.0 and all(w["end"] > w["start"] for w in ws)
+    ws_plain = captions.words(seg)  # no audio: proportional split, still ordered and inside the segment
+    assert ws_plain[0]["start"] == 0.0 and ws_plain[-1]["end"] == 2.0
+    assert all(a["end"] <= b["start"] + 1e-6 for a, b in zip(ws_plain, ws_plain[1:], strict=False))
+    s = captions.srt(ws, per_cue=3)
+    assert s.startswith("1\n00:00:00,030 --> 00:00:01,520\none two three\n")
+    (tmp_path / "analysis.json").write_text(
+        json.dumps({"kind": "video", "transcript": seg, "audio": {"onset_times": [0.03, 0.45, 0.86, 1.52]}}),
+        encoding="utf-8",
+    )
+    paths = captions.write_captions(str(tmp_path))
+    assert [os.path.basename(p) for p in paths] == ["captions_words.srt", "captions_3words.srt"]
+    assert "00:00:00,450 --> 00:00:00,860\ntwo" in (tmp_path / "captions_words.srt").read_text(encoding="utf-8")
+
+
+def test_kinetic_captions_skip_without_transcript(tmp_path):
+    from revideo import captions
+
+    (tmp_path / "analysis.json").write_text(json.dumps({"kind": "video", "transcript": []}), encoding="utf-8")
+    assert captions.write_captions(str(tmp_path)) == []
