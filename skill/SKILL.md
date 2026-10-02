@@ -77,7 +77,9 @@ Per shot: size, angle, lens estimate, lighting, action, on-screen text, story fu
 grain) before estimating a lens. A shallow `depth_of_field_guess` does not prove a lens effect:
 `focus_falloff_guess: abrupt` means the sharp region was most likely cut out or composited. For
 photos, describe the subject from `subject` (box and palette), not from the background-dominated
-global palette.
+global palette. A camera type ending in `(flat image, keyframed)` means no parallax was measured: the
+move was most likely animated in the edit on a photo or cut-out (2.5D / Ken Burns), so replicate it
+with editor keyframes, not a gimbal [I].
 
 ### 4. References
 Follow `references/cinematic_reference_protocol.md`. Propose films, directors and DPs per shot or

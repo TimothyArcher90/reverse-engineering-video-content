@@ -3,6 +3,16 @@
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- **Flat-image moves (2.5D / Ken Burns)**: when every tracked point in a moving shot fits one rigid
+  transform (≥ 95 % inliers, ≤ 0.3 px residual), the move is labelled `(flat image, keyframed)` with a
+  `rig_guess`, instead of `handheld`. Uneven speed from keyframe easing no longer reads as hand shake,
+  and the plan gives editor keyframes as the rig instead of a gimbal. On a real collage-style reel
+  this relabels 12 of 47 shots. Tests: an eased zoom+pan on one still is flat and not handheld; a scene
+  with a foreground moving 4× faster than its background is not flat.
+
 ## [0.3.0] — 2026-09-25
 
 The master-copycat release: photos and sound as well as video, everything the file says about how it
