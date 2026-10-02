@@ -195,3 +195,48 @@ def test_photo_subject_palette_and_still_prompt(photo, tmp_path):
 def test_fingerprint_evidence_names_the_field(photo):
     hit = next(h for h in forensics.gather(photo)["tool_fingerprints"] if h["tool"] == "Adobe Lightroom")
     assert hit["evidence"].startswith("xmp.CreatorTool: Adobe Lightroom")
+
+
+def _warp_frames(tex, n, scale_at, shift_at, size=(320, 180)):
+    w, h = size
+    cx, cy = tex.shape[1] / 2, tex.shape[0] / 2
+    out = []
+    for i in range(n):
+        t = i / (n - 1)
+        e = t * t * (3 - 2 * t)  # ease-in-out: uneven speed, like a keyframed move
+        s, dx = scale_at(e), shift_at(e)
+        M = np.float32([[s, 0, w / 2 - s * cx + dx], [0, s, h / 2 - s * cy]])
+        out.append(cv2.warpAffine(tex, M, (w, h), borderMode=cv2.BORDER_REFLECT))
+    return out
+
+
+def test_flat_image_move_is_not_called_handheld(tmp_path):
+    """An eased zoom+pan on one still (Ken Burns) is a rigid transform: flat image, no parallax."""
+    from conftest import _texture, write
+
+    from revideo import motion
+
+    tex = _texture(360, 640, 11)
+    frames = _warp_frames(tex, 48, lambda e: 1.0 + 0.35 * e, lambda e: -40 * e)
+    src = write(str(tmp_path / "kb.mp4"), frames)
+    cam = motion.analyze_shot(src, 0, len(frames), 24)
+    assert "flat image" in cam["type"] and "handheld" not in cam["type"], cam
+    assert "push_in/zoom_in" in cam["type"] and "rig_guess" in cam
+
+
+def test_parallax_scene_is_not_flat(tmp_path):
+    """Foreground moving 4× faster than the background: one rigid transform cannot explain it."""
+    from conftest import _texture, write
+
+    from revideo import motion
+
+    bg, fg = _texture(180, 900, 3), _texture(120, 140, 5)
+    frames = []
+    for i in range(48):
+        f = bg[:, i * 2 : i * 2 + 320].copy()
+        x = 250 - i * 8 % 400 if i * 8 < 230 else 20
+        f[30:150, max(0, x) : max(0, x) + 140] = fg[:, : 140 - max(0, max(0, x) + 140 - 320)]
+        frames.append(f)
+    src = write(str(tmp_path / "px.mp4"), frames)
+    cam = motion.analyze_shot(src, 0, len(frames), 24)
+    assert "flat image" not in cam["type"] and "rig_guess" not in cam, cam

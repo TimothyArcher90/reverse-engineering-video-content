@@ -7,6 +7,9 @@ import numpy as np
 
 from .video import iter_frames
 
+FLAT_INLIERS = 0.95  # share of tracked points that fit one rigid transform
+FLAT_RESID_PX = 0.3  # median leftover motion (px at 320 px width) after removing that transform
+
 
 def _pair_transform(a: np.ndarray, b: np.ndarray):
     pts = cv2.goodFeaturesToTrack(a, maxCorners=300, qualityLevel=0.01, minDistance=8)
@@ -63,11 +66,17 @@ def analyze_shot(path: str, start: int, end: int, fps: float, samples: int = 10,
     if abs(mr) > 1.0:
         moves.append("roll")
     handheld = jitter > 3.0
+    inliers, resid = float(np.median(arr[:, 4])), float(np.median(arr[:, 5]))
+    # every tracked point obeys one rigid 2D transform: a flat image being moved (2.5D / Ken Burns), not a
+    # real camera in a 3D scene, where parallax breaks the single-transform fit. Uneven speed is easing.
+    flat = bool(moves) and inliers >= FLAT_INLIERS and resid <= FLAT_RESID_PX
     if not moves:
         kind = "handheld_static" if handheld else "static/locked_off"
+    elif flat:
+        kind = "+".join(moves) + " (flat image, keyframed)"
     else:
         kind = "+".join(moves) + (" (handheld)" if handheld else " (stabilized)")
-    return {
+    out = {
         "type": kind,
         "pan_pct_w_per_s": round(mtx, 2),
         "tilt_pct_w_per_s": round(mty, 2),
@@ -78,3 +87,9 @@ def analyze_shot(path: str, start: int, end: int, fps: float, samples: int = 10,
         "track_inlier_ratio": round(float(np.median(arr[:, 4])), 2),
         "note": "zoom vs dolly cannot be separated from 2D flow alone (parallax check needed)",
     }
+    if flat:
+        out["rig_guess"] = (
+            "virtual camera on a flat image (2.5D / Ken Burns, keyframed in an editor) or a lens zoom on a "
+            "flat subject: no parallax measured [I]"
+        )
+    return out

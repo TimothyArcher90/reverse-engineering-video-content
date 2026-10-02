@@ -36,6 +36,13 @@ RIG = {  # measured camera move → how to get it at each tier
 }
 
 
+FLAT_RIG = (  # a move measured on a flat image is made in the edit, not on set
+    "CapCut keyframes (position/scale) on a photo",
+    "Premiere/Resolve keyframes, or After Effects 3D layers + camera",
+    "After Effects/Fusion 2.5D: cut-out layers + virtual camera",
+)
+
+
 def load_catalog() -> dict:
     with resources.files("revideo").joinpath("data/tools.json").open(encoding="utf-8") as f:
         return json.load(f)
@@ -47,6 +54,10 @@ def _move_key(cam_type: str) -> str:
         if needle in t:
             return key
     return "handheld" if "handheld" in t else "static"
+
+
+def _is_flat(cam_type: str) -> bool:
+    return "flat image" in (cam_type or "")
 
 
 def _recipe_checks(crs: dict | None, o: dict | None) -> list[str]:
@@ -192,6 +203,8 @@ def plan(r: dict) -> str:
         for s in r["shots"]:
             cam = (s.get("camera") or {}).get("type", "static")
             rig = RIG[_move_key(cam)]
+            if _is_flat(cam):
+                rig = FLAT_RIG
             size = ((s.get("framing") or {}).get("faces") or {}).get("shot_size_estimate")
             p = _prompt(
                 {

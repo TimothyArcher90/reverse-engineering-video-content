@@ -104,7 +104,7 @@ revideo tools                                          # catálogo de herramient
 
 ## Validación
 
-34 tests con verdad conocida en CI (Linux, macOS, Windows) + pruebas con metraje real
+36 tests con verdad conocida en CI (Linux, macOS, Windows) + pruebas con metraje real
 ([detalle](docs/VALIDATION.md)):
 
 | Prueba real | Resultado |
